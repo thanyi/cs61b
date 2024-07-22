@@ -111,6 +111,20 @@ public class Model extends Observable {
         changed = false;
 
         // TODO: Modify this.board (and perhaps this.score) to account
+//        for (int c = 0; c < board.size(); c++) {
+//            for (int r = 0; r < board.size(); r++) {
+//                Tile tile = board.tile(c, r);
+//                int maxLength = board.size();
+//
+//                for (int i = c+1 ; i < board.size(); i++) {
+//                    if ()
+//                }
+//
+//                if ()
+//
+//
+//            }
+//        }
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
@@ -137,8 +151,16 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
-        return false;
+        boolean flag = false;
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i , j) == null){
+                    flag = true;
+                    break;
+                }
+            }
+        }
+        return flag;
     }
 
     /**
@@ -147,8 +169,20 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
-        return false;
+
+        boolean flag = false;
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i , j) == null)
+                    continue;
+
+                if (b.tile(i, j).value() == MAX_PIECE ){
+                    flag = true;
+                    break;
+                }
+            }
+        }
+        return flag;
     }
 
     /**
@@ -158,7 +192,41 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if(emptySpaceExists(b))
+            return true;
+
+
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size() ; j++) {
+                int currentValue = b.tile(i, j).value();
+                int size = b.size();
+                //  循环中判断是否邻居和其值相当
+                if (i > 0 && currentValue == b.tile(i - 1, j).value()) {
+                    return true;
+                }
+
+                // Check below
+                if (i < size - 1 && currentValue == b.tile(i + 1, j).value()) {
+                    return true;
+                }
+
+                // Check left
+                if (j > 0 && currentValue == b.tile(i, j - 1).value()) {
+                    return true;
+                }
+
+                // Check right
+                if (j < size - 1 && currentValue == b.tile(i, j + 1).value()) {
+                    return true;
+                }
+
+
+
+            }
+        }
+
+
+
         return false;
     }
 
