@@ -94,6 +94,118 @@ public class Model extends Observable {
         setChanged();
     }
 
+    /** 检查此tile是否可以向上移动，如果可以进行移动，则返回true
+     * 判断依据：
+     *  1. 上方第一个是空白格
+     *  2. 上方第一个是非空白格，且是相同数据
+     *  3. 上方第一个是非空白格，且是非相同数据
+     * @param t
+     * @param col
+     * @param row
+     * @param board
+     * @return
+     */
+    public static boolean checkMove(Tile t,int col,int row,Board board){
+//        如果此tile自身是空格，则不符合条件
+        if(t == null || row == board.size()-1){
+           return false;
+        }
+
+        int currValue = t.value();
+        Tile tile = board.tile(col, row+1);
+        if ( tile == null){
+            return true;
+        }
+        else if (tile.value() == currValue) {
+            return true;
+        }else {
+            return false;
+        }
+
+    }
+
+    /** 返回具体能到达的位置(行的位置）
+     *
+     * @param t
+     * @param col
+     * @param row
+     * @param board
+     * @param max_length:检测移动的上限
+     * @return
+     */
+    public static int pathNumToMove(Tile t,int col,int row,Board board,int max_length){
+        //                如果可以移动
+
+        if(!checkMove(t, col, row, board)) {
+            System.out.println("Error: this tile couldn't move!");
+            return 0;
+        }else{
+            for (int i = row+1; i < max_length; i++) {
+                /* 如果是空格，就直接continue */
+                if ( board.tile(col, i) == null ){
+                    if( i == max_length-1 ){
+                        return i;
+                    }
+                /* 在上行时候如果遇到值相等，则返回此地址 */
+                }else if (board.tile(col, i).value() == t.value() ) { return i; }
+                /* 在上行时候如果遇到非空格且值不相等，则返回此地址-1 */
+                 else { return i-1; }
+            }
+
+        }
+        return 0;
+    }
+
+    /** 检测空格向上时是否会进行merge，若会merge则返回true
+     *
+     * @param t
+     * @param col
+     * @param row
+     * @param board
+     * @param flag_row
+     * @return
+     */
+    public static boolean ifMerged(Tile t,int col,int row,Board board, int[] flag_row,int[] flag_col){
+        /* 如果可以进行移动 */
+        if(!checkMove(t, col, row, board)) {
+            System.out.println("Error: this tile couldn't move!");
+
+        }else{
+            for (int i = row+1; i < board.size(); i++) {
+                /* 只是移动至空白格，不会导致merge */
+                if (board.tile(col, i) == null){
+                    if( i == board.size()-1 ){
+                        return false;
+                    }
+                /* 移动至非空白格，且数值相同，会导致merge */
+                }else if (board.tile(col, i).value() == t.value() ) {
+                    if(!contains(flag_row,i)){
+                        return true;
+                    }else {
+                        return false;
+                    }
+                 }
+                else { return false; }
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 
+     * @param arr
+     * @param val
+     * @return
+     */
+    public static boolean contains(int[] arr, int val){
+        for (int i : arr) {
+            if (i == val)
+                return true;
+        }
+        return false;
+    }
+
     /** Tilt the board toward SIDE. Return true iff this changes the board.
      *
      * 1. If two Tile objects are adjacent in the direction of motion and have
@@ -110,21 +222,53 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
-        // TODO: Modify this.board (and perhaps this.score) to account
-//        for (int c = 0; c < board.size(); c++) {
-//            for (int r = 0; r < board.size(); r++) {
-//                Tile tile = board.tile(c, r);
-//                int maxLength = board.size();
-//
-//                for (int i = c+1 ; i < board.size(); i++) {
-//                    if ()
-//                }
-//
-//                if ()
-//
-//
-//            }
-//        }
+        board.setViewingPerspective(side);
+//        用来标记已经merge过的方块
+        int[] flag_col = new int[4];
+        int[] flag_row = new int[4];
+        int flag_num =0;
+        for (int i = 0; i < 4; i++) {
+            flag_col[i] = -1;
+            flag_row[i] = -1;
+        }
+
+
+        for (int c = board.size() - 1 ; c >=0 ; c--) {
+            for (int r = board.size() - 1; r >=0; r--) {
+
+                Tile tile = board.tile(c, r);
+                /* checkMove判断是否可以移动 */
+                if(checkMove(tile, c, r, board)){
+
+                    int resRow = pathNumToMove(tile, c, r, board,board.size());
+
+                    /* 若是目的地被标记，则查看前一个位置是否可以移动,若是可以则用其替代 */
+                    if(contains(flag_row,resRow) && contains(flag_col,c) ){
+                        int resDownRow = pathNumToMove(tile, c, r, board, resRow);
+                        resRow = resDownRow;
+                    }
+
+                    if(ifMerged(tile, c, r, board, flag_row, flag_col)){
+                        /* 此目的地被标记 */
+
+                        flag_col[flag_num] = c;
+                        flag_row[flag_num] = resRow;
+                        score += tile.value() *2;
+
+                        flag_num +=1;   // 可以移动则记录
+                    }
+
+                    board.move(c, resRow, tile);
+                    changed = true;
+                }
+            }
+            for (int i = 0; i < 4; i++) {
+                flag_col[i] = -1;
+                flag_row[i] = -1;
+            }
+        }
+
+        board.setViewingPerspective(Side.NORTH);
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
