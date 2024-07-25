@@ -250,7 +250,6 @@ public class Model extends Observable {
 
                     if(ifMerged(tile, c, r, board, flag_row, flag_col)){
                         /* 此目的地被标记 */
-
                         flag_col[flag_num] = c;
                         flag_row[flag_num] = resRow;
                         score += tile.value() *2;
