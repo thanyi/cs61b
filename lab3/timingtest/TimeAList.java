@@ -22,6 +22,34 @@ public class TimeAList {
     }
 
     public static void timeAListConstruction() {
-        // TODO: YOUR CODE HERE
+        AList<Integer> Ns = new AList<>();
+        AList<Double> times = new AList<>();
+        AList<Integer> opCounts = new AList<>();
+
+        /* 开始对每一种次数进行次数的添加 */
+        for (int i = 1000; i <= Math.pow(2,23); i = i*2 ) {
+            AList<Integer> testAList = new AList<>();
+
+            /* 运算计时 */
+            Stopwatch sw1 = new Stopwatch();
+            for (int j = 0; j < i; j++) {
+                testAList.addLast(10);
+            }
+            double timeInSeconds = sw1.elapsedTime();
+
+            /* 添加进入第一列 */
+            Ns.addLast(i);
+
+            /* 添加进入第二列 */
+            times.addLast(timeInSeconds);
+
+            /* 添加进入第三列 */
+            opCounts.addLast(i);
+
+        }
+
+        printTimingTable(Ns,times,opCounts);
+
+
     }
 }
