@@ -56,17 +56,31 @@ public class ArrayDeque<T> {
 
     public void resize(int capacity){
         T[] newItems = (T[])new Object[capacity];
-        for (int i = 0; i <= nextFirst; i++) {
-            newItems[i] = items[i];
-        }
-        /* 保存新数组长度，方便下标计算 */
-        int k = newItems.length -1;
+//        for (int i = 0; i <= nextFirst; i++) {
+//            newItems[i] = items[i];
+//        }
+//        /* 保存新数组长度，方便下标计算 */
+//        int k = newItems.length -1;
+//
+//        for (int j = items.length -1 ; j >= nextLast ; j--) {
+//            newItems[k] = items[j];
+//            k-=1;
+//        }
+//        nextFirst = newItems.length - (items.length - nextFirst);
+//        items = newItems;
 
-        for (int j = items.length -1 ; j >= nextLast ; j--) {
-            newItems[k] = items[j];
-            k-=1;
+        int oldSize = size();
+        /* 重新构建一个从0开始的数组 */
+        int k = 0;
+        for (int i = 0; i < oldSize; i++) {
+            if (items[i] != null){
+                newItems[k] = items[i];
+            }
+            k += 1 ;
         }
-        nextFirst = newItems.length - (items.length - nextFirst);
+        nextFirst = newItems.length - 1;
+        nextLast  = k + 1;
+
         items = newItems;
     }
 
@@ -74,9 +88,15 @@ public class ArrayDeque<T> {
         if(size == 0){
             return null;
         }
-
         size -= 1;
+        if (size < items.length / 4){
+            resize(items.length / 2);
+        }
+
         int first = (nextFirst+1) % items.length;
+        if (first < 0){
+            first += items.length;
+        }
         T victim = items[first];
         items[first] = null;
         nextFirst = first;
@@ -90,10 +110,17 @@ public class ArrayDeque<T> {
         }
 
         size -= 1;
-        int Last = (nextLast - 1) % items.length;
-        T victim = items[Last];
-        items[Last] = null;
-        nextLast = Last;
+        if (size < items.length / 4){
+            resize(items.length / 2);
+        }
+        int last = (nextLast - 1) % items.length;
+        if (last < 0){
+            last += items.length;
+        }
+
+        T victim = items[last];
+        items[last] = null;
+        nextLast = last;
 
         return victim;
     }
