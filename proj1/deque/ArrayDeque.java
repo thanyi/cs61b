@@ -12,25 +12,35 @@ public class ArrayDeque<T> {
         nextLast = nextFirst + 1;
     }
 
+    public ArrayDeque(T x){
+        size = 1;
+        items = (T[]) new Object[8];
+        nextFirst = items.length /2;
+        nextLast = nextFirst + 1;
+
+        items[nextFirst] = x;
+        nextFirst = (nextFirst - 1) % items.length;
+    }
+
     public void addFirst(T item){
         /* 判断是否ArrayDeque已满 */
-        if (size != 0 && nextLast == nextFirst + 1){
+        if (size != 0 && nextLast == (nextFirst + 1) % items.length){
             resize(size * 2);
         }
         size += 1;
 
         items[nextFirst] = item;
-        nextFirst = (nextFirst - 1) % items.length;
+        nextFirst = (nextFirst - 1 + items.length) % items.length;
     }
 
 
     public void addLast(T item){
-        if (size != 0 && nextLast == nextFirst + 1){
+        if (size != 0 && nextLast == (nextFirst + 1) % items.length){
             resize(size * 2);
         }
         size += 1;
         items[nextLast] = item;
-        nextLast = (nextLast + 1) % items.length;
+        nextLast = (nextLast + 1 + items.length) % items.length;
 
     }
 
@@ -56,32 +66,44 @@ public class ArrayDeque<T> {
 
     public void resize(int capacity){
         T[] newItems = (T[])new Object[capacity];
-//        for (int i = 0; i <= nextFirst; i++) {
-//            newItems[i] = items[i];
-//        }
-//        /* 保存新数组长度，方便下标计算 */
-//        int k = newItems.length -1;
+        /* 扩展数组至两倍 */
+//        if(capacity > items.length){
+//            for (int i = 0; i <= nextFirst; i++) {
+//                newItems[i] = items[i];
+//            }
+//            /* 保存新数组长度，方便下标计算 */
+//            int k = newItems.length -1;
 //
-//        for (int j = items.length -1 ; j >= nextLast ; j--) {
-//            newItems[k] = items[j];
-//            k-=1;
-//        }
-//        nextFirst = newItems.length - (items.length - nextFirst);
-//        items = newItems;
+//            for (int j = items.length -1 ; j >= nextLast ; j--) {
+//                newItems[k] = items[j];
+//                k-=1;
+//            }
+//            nextFirst = newItems.length - (items.length - nextFirst);
+//            items = newItems;
+//        }else{
+            /* 缩小数组至二分之一 */
 
-        int oldSize = size();
-        /* 重新构建一个从0开始的数组 */
-        int k = 0;
-        for (int i = 0; i < items.length; i++) {
-            if (items[i] != null){
-                newItems[k] = items[i];
+            int oldSize = size();
+            /* 重新构建一个从0开始的数组 */
+            int k = 0;
+            int first = (nextFirst + 1) % items.length;
+            int last = (nextLast - 1  + items.length) % items.length;
+
+            for (int i = first; i != last; i = (i + 1) % items.length) {
+                if (items[i] != null){
+                    newItems[k] = items[i];
+                }
+                k += 1 ;
             }
-            k += 1 ;
-        }
-        nextFirst = newItems.length - 1;
-        nextLast  = k + 1;
+            newItems[k] = items[last];
 
-        items = newItems;
+            nextFirst = newItems.length - 1;
+            nextLast  = k + 1;
+
+            items = newItems;
+
+
+
     }
 
     public T removeFirst(){
@@ -95,10 +117,8 @@ public class ArrayDeque<T> {
 
         size -= 1;
 
-        int first = (nextFirst+1) % items.length;
-        if (first < 0){
-            first += items.length;
-        }
+        int first = (nextFirst+ 1 + items.length) % items.length;
+
         T victim = items[first];
         items[first] = null;
         nextFirst = first;
@@ -116,10 +136,8 @@ public class ArrayDeque<T> {
         }
 
         size -= 1;
-        int last = (nextLast - 1) % items.length;
-        if (last < 0){
-            last += items.length;
-        }
+        int last = (nextLast - 1  + items.length) % items.length;
+
 
         T victim = items[last];
         items[last] = null;
