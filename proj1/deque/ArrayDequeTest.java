@@ -42,7 +42,7 @@ public class ArrayDequeTest {
 
         int N = 100000;
         for (int i = 0; i < N; i += 1) {
-            int operationNumber = StdRandom.uniform(0, 5);
+            int operationNumber = StdRandom.uniform(0, 4);
             if (operationNumber == 0) {
                 // addLast
                 int randVal = StdRandom.uniform(0, 100);
@@ -56,12 +56,42 @@ public class ArrayDequeTest {
 //                System.out.println("size: " + size1);
 
             }
-            else if (operationNumber == 3) {
+            else if (operationNumber == 2) {
                 // removelast
 
                 deque.removeLast();
                 System.out.println("removelast(" + ")");
             }
+            else if (operationNumber == 3) {
+                // removelast
+                int randVal = StdRandom.uniform(0, 8);
+                deque.get(randVal);
+                System.out.println("get(" +randVal+ ")");
+            }
         }
     }
+    @Test
+    public void testaddsizeempty() {
+        ArrayDeque<String> dq = new ArrayDeque<>();
+        assertEquals(true, dq.isEmpty());
+
+        dq.addFirst("first");
+        assertEquals(1, dq.size());
+
+        dq.addLast("last");
+        assertEquals(2, dq.size());
+
+        dq.printDeque();
+
+        String first = dq.removeFirst();
+        assertEquals("first", first);
+
+        String last = dq.removeLast();
+        assertEquals("last", last);
+
+        assertEquals(0, dq.size());
+    }
+
+
+
 }

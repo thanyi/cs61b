@@ -72,7 +72,7 @@ public class ArrayDeque<T> {
         int oldSize = size();
         /* 重新构建一个从0开始的数组 */
         int k = 0;
-        for (int i = 0; i < oldSize; i++) {
+        for (int i = 0; i < items.length; i++) {
             if (items[i] != null){
                 newItems[k] = items[i];
             }
@@ -88,10 +88,12 @@ public class ArrayDeque<T> {
         if(size == 0){
             return null;
         }
-        size -= 1;
-        if (size < items.length / 4){
-            resize(items.length / 2);
+
+        if (size < items.length / 4 && size >= 16){
+            resize((int)(items.length / 2));
         }
+
+        size -= 1;
 
         int first = (nextFirst+1) % items.length;
         if (first < 0){
@@ -109,10 +111,11 @@ public class ArrayDeque<T> {
             return null;
         }
 
-        size -= 1;
-        if (size < items.length / 4){
-            resize(items.length / 2);
+        if (size < items.length / 4 && size >= 16){
+            resize((int)(items.length / 2));
         }
+
+        size -= 1;
         int last = (nextLast - 1) % items.length;
         if (last < 0){
             last += items.length;
@@ -126,7 +129,8 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index){
-        int realIndex = nextFirst + index + 1;
+        int realIndex = (nextFirst + index + 1 ) % items.length;
+
         return items[realIndex];
     }
 }
