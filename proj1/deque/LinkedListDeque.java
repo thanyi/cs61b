@@ -1,6 +1,6 @@
 package deque;
 
-public class LinkedListDeque<Item> {
+public class LinkedListDeque<Item> implements Deque<Item> {
     /** subclass, which is used to represent the Node concept */
     private class ItemNode {
         public Item item;
@@ -31,7 +31,7 @@ public class LinkedListDeque<Item> {
         sentinel.next = new ItemNode(x,sentinel,sentinel);
         sentinel.prev = sentinel.next;
     }
-
+    @Override
     public void addFirst(Item x){
         size = size + 1;
         /* ItemNode 前后连接 */
@@ -40,7 +40,7 @@ public class LinkedListDeque<Item> {
         sentinel.next.prev = newFirst;
         sentinel.next = newFirst;
     }
-
+    @Override
     public void addLast(Item x){
         size = size + 1;
 
@@ -53,17 +53,11 @@ public class LinkedListDeque<Item> {
 
     }
 
-    public boolean isEmpty(){
-        if (size == 0)
-            return true;
-        else
-            return false;
-    }
-
+    @Override
     public int size(){
         return size;
     }
-
+    @Override
     public void printDeque(){
         ItemNode p = sentinel.next;
         while(p.next != sentinel){
@@ -73,7 +67,7 @@ public class LinkedListDeque<Item> {
         /* 打印最后一个item以及换行符*/
         System.out.println(p.item);
     }
-
+    @Override
     public Item removeFirst(){
         if(this.isEmpty()){
             return null;
@@ -87,6 +81,7 @@ public class LinkedListDeque<Item> {
 
         return victim.item;
     }
+    @Override
     public Item removeLast(){
         if(this.isEmpty()){
             return null;
@@ -99,8 +94,8 @@ public class LinkedListDeque<Item> {
 
         return victim.item;
     }
-
-    public ItemNode get(int index){
+    @Override
+    public Item get(int index){
         if(this.isEmpty()){
             return null;
         }
@@ -112,7 +107,7 @@ public class LinkedListDeque<Item> {
             index -= 1;
         }
 
-        return p;
+        return p.item;
     }
 
     public Item getRecursive(int index){

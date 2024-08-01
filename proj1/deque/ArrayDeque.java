@@ -1,6 +1,6 @@
 package deque;
 
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Deque<T>{
     private int size;
     private T[] items;
     int nextFirst;
@@ -22,6 +22,7 @@ public class ArrayDeque<T> {
         nextFirst = (nextFirst - 1) % items.length;
     }
 
+    @Override
     public void addFirst(T item){
         /* 判断是否ArrayDeque已满 */
         if (size != 0 && nextLast == (nextFirst + 1) % items.length){
@@ -33,7 +34,7 @@ public class ArrayDeque<T> {
         nextFirst = (nextFirst - 1 + items.length) % items.length;
     }
 
-
+    @Override
     public void addLast(T item){
         if (size != 0 && nextLast == (nextFirst + 1) % items.length){
             resize(size * 2);
@@ -44,18 +45,12 @@ public class ArrayDeque<T> {
 
     }
 
-    public boolean isEmpty(){
-        if (size == 0){
-            return true;
-        }else
-            return false;
-    }
 
-
+    @Override
     public int size(){
         return size;
     }
-    
+    @Override
     public void printDeque(){
         /* 保证循环 */
         for (int i = (nextFirst+1) % items.length; i != (nextLast-1) % items.length; i = (i+1) % items.length ) {
@@ -66,24 +61,6 @@ public class ArrayDeque<T> {
 
     public void resize(int capacity){
         T[] newItems = (T[])new Object[capacity];
-        /* 扩展数组至两倍 */
-//        if(capacity > items.length){
-//            for (int i = 0; i <= nextFirst; i++) {
-//                newItems[i] = items[i];
-//            }
-//            /* 保存新数组长度，方便下标计算 */
-//            int k = newItems.length -1;
-//
-//            for (int j = items.length -1 ; j >= nextLast ; j--) {
-//                newItems[k] = items[j];
-//                k-=1;
-//            }
-//            nextFirst = newItems.length - (items.length - nextFirst);
-//            items = newItems;
-//        }else{
-            /* 缩小数组至二分之一 */
-
-            int oldSize = size();
             /* 重新构建一个从0开始的数组 */
             int k = 0;
             int first = (nextFirst + 1) % items.length;
@@ -102,10 +79,8 @@ public class ArrayDeque<T> {
 
             items = newItems;
 
-
-
     }
-
+    @Override
     public T removeFirst(){
         if(size == 0){
             return null;
@@ -125,14 +100,14 @@ public class ArrayDeque<T> {
 
         return victim;
     }
-
+    @Override
     public T removeLast(){
         if(size == 0){
             return null;
         }
 
         if (size < items.length / 4 && size >= 16){
-            resize((int)(items.length / 2));
+            resize((items.length / 2));
         }
 
         size -= 1;
@@ -145,7 +120,7 @@ public class ArrayDeque<T> {
 
         return victim;
     }
-
+    @Override
     public T get(int index){
         int realIndex = (nextFirst + index + 1 ) % items.length;
 

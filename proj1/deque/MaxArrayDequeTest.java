@@ -1,62 +1,87 @@
 package deque;
 
-import afu.org.checkerframework.checker.igj.qual.I;
 import edu.princeton.cs.algs4.StdRandom;
 import org.junit.Test;
+
+import java.util.Comparator;
+
 import static org.junit.Assert.*;
 
-public class ArrayDequeTest {
+public class MaxArrayDequeTest {
     @Test
-    public void testAddAndRemove(){
-        ArrayDeque<Integer> deque = new ArrayDeque<>();
+    public void testMax(){
+        Comparator<Integer> c = new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return o1 - o2;
+            }
+        };
+
+        MaxArrayDeque<Integer> deque = new MaxArrayDeque<>(c);
 
         deque.addLast(82);
-        deque.addLast(82);
-        deque.removeLast();
+        deque.addLast(43);
+        deque.addLast(53);
+        deque.addLast(23);
+        deque.addLast(73);
+        int max = deque.max();
 
 
-//        assertEquals("removeFirst error!","i",deque.removeFirst());
-//        assertEquals("removeLast error!","you",deque.removeLast());
-    }
-    @Test
-    public void testGet(){
-        ArrayDeque<String> deque = new ArrayDeque<>();
-        deque.addLast("i");
-        deque.addLast("love");
-        deque.addLast("you");
-        deque.addLast("you");
-        deque.addLast("you");
-        deque.addLast("you");
-        deque.addFirst("i");
-        deque.addFirst("i");
-        deque.addFirst("i");
-        deque.addFirst("i");
-
-        assertEquals("removeFirst error!","i",deque.get(0));
+        assertEquals("removeFirst error!",82,max);
 
     }
+    @Test
+    public void testMaxString(){
+        Comparator<String> c = new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        };
+
+        MaxArrayDeque<String> deque = new MaxArrayDeque<>(c);
+
+        deque.addLast("I");
+        deque.addLast("Love");
+        deque.addLast("You");
+        deque.addLast("Very");
+        deque.addLast("Much");
+
+        String max = deque.max();
+
+
+        assertEquals("removeFirst error!","You",max);
+    }
 
 
     @Test
-    public void testaddsizeempty() {
-        ArrayDeque<String> dq = new ArrayDeque<>();
-        assertEquals(true, dq.isEmpty());
+    public void testMaxString2(){
+        Comparator<String> c = new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        };
 
-        dq.addFirst("first");
-        assertEquals(1, dq.size());
+        Comparator<String> c2 = new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o1.compareTo(o2);
+            }
+        };
 
-        dq.addLast("last");
-        assertEquals(2, dq.size());
+        MaxArrayDeque<String> deque = new MaxArrayDeque<>(c);
 
-        dq.printDeque();
+        deque.addLast("I");
+        deque.addLast("Love");
+        deque.addLast("You");
+        deque.addLast("Very");
+        deque.addLast("Much");
 
-        String first = dq.removeFirst();
-        assertEquals("first", first);
+        String max = deque.max(c2);
 
-        String last = dq.removeLast();
-        assertEquals("last", last);
 
-        assertEquals(0, dq.size());
+        assertEquals("removeFirst error!","You",max);
     }
 
     @Test
@@ -180,7 +205,21 @@ public class ArrayDequeTest {
         }
     }
 
+    @Test
+    public void equalsTest() {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        ArrayDeque<Integer> ad2 = new ArrayDeque<>();
 
+        ad1.addLast(0);
+        ad2.addLast(0);
+        assertEquals(ad1, ad2);
+
+        ad1.addLast(1);
+        assertNotEquals(ad1, ad2);
+
+        ad2.addLast(2);
+        assertNotEquals(ad1, ad2);
+    }
 
 
     @Test
