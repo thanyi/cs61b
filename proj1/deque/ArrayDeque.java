@@ -91,8 +91,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
 
-        if (size < items.length / 4 && size >= 16) {
-            resize((int) (items.length / 2));
+        if (size < (items.length / 4) && size >= 16) {
+            resize((items.length / 2));
         }
 
         size -= 1;
@@ -112,7 +112,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
 
-        if (size < items.length / 4 && size >= 16) {
+        if (size <= items.length / 4 && size >= 16) {
             resize((items.length / 2));
         }
 
@@ -135,17 +135,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return items[realIndex];
     }
 
-    private boolean contains(T x) {
-        if (size == 0)
-            return false;
-
-        for (T item : this) {
-            if (item == x) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     @Override
     public boolean equals(Object other) {

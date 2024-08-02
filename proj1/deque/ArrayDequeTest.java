@@ -80,6 +80,22 @@ public class ArrayDequeTest {
         for (int i = 0; i < 20; i++) {
             assertEquals("Should the same", (int)i, (int)arrayDeque.get(i));
         }
+
+
+
+    }
+
+    @Test
+    public void addWithResizingTest2() {
+        ArrayDeque<Integer> arrayDeque = new ArrayDeque<>();
+
+        for (int i = 0; i < 128; i++) {
+            arrayDeque.addLast(i);
+        }
+
+        for (int i = 0; i <= 128-30; i++) {
+            arrayDeque.removeLast();
+        }
     }
 
     @Test
