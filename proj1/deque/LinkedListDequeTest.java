@@ -165,14 +165,20 @@ public class LinkedListDequeTest {
     public void testEquals() {
         LinkedListDeque<String> wordList = new LinkedListDeque<String>();
         LinkedListDeque<String> wordList2 = new LinkedListDeque<String>();
+        LinkedListDeque<String> wordList3 = new LinkedListDeque<String>();
 
         wordList.addLast("I");
         wordList.addLast("love");
         wordList.addLast("you");
 
-        wordList2.addLast("I");
         wordList2.addLast("love");
+        wordList2.addLast("I");
         wordList2.addLast("you");
+
+        wordList3.addLast("love");
+        wordList3.addLast("I");
+        wordList3.addLast("you");
+
 //        System.out.println(wordList.equals(wordList2));
 
 //        assertEquals("Should have the same value", true, item);

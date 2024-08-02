@@ -9,10 +9,10 @@ public class MaxArrayDeque<T> extends ArrayDeque<T>{
         comp = c;
     }
 
-    public MaxArrayDeque(Comparator<T> c,T x){
-        super(x);
-        comp = c;
-    }
+//    public MaxArrayDeque(Comparator<T> c,T x){
+//        super(x);
+//        comp = c;
+//    }
 
 
 
