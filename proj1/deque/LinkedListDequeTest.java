@@ -136,9 +136,16 @@ public class LinkedListDequeTest {
         wordList.addLast("I");
         wordList.addLast("love");
         wordList.addLast("you");
+        wordList.addLast("you1");
+        wordList.addLast("you2");
+        wordList.addLast("you3");
         String item = wordList.getRecursive(1);
+        String item2 = wordList.getRecursive(2);
+        String item3 = wordList.getRecursive(3);
 
         assertEquals("Should have the same value", "love", item);
+        assertEquals("Should have the same value", "you", item2);
+        assertEquals("Should have the same value", "you1", item3);
     }
 
 
@@ -155,7 +162,7 @@ public class LinkedListDequeTest {
             System.out.println(s);
         }
 
-        System.out.println(wordList.contains("I"));
+
 //        assertEquals("Should have the same value", "love", item);
     }
 
@@ -184,4 +191,7 @@ public class LinkedListDequeTest {
 //        assertEquals("Should have the same value", true, item);
         assertTrue("Should have the same value", wordList.equals(wordList2));
     }
+
+
+
 }

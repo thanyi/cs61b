@@ -241,7 +241,7 @@ public class ArrayDequeTest {
             System.out.println(s);
         }
 
-        System.out.println(wordList.contains("I"));
+
 //        assertEquals("Should have the same value", "love", item);
     }
 

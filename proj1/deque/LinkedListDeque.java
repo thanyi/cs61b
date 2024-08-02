@@ -8,9 +8,10 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
      * subclass, which is used to represent the Node concept
      */
     private class TNode {
-        public T item;
-        public TNode next;
-        public TNode prev;
+        private T item;
+        private TNode next;
+        private TNode prev;
+
 
         public TNode(T i, TNode p, TNode n) {
             prev = p;
@@ -18,7 +19,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             item = i;
         }
     }
-
+    private TNode recursionPos;
     /* size to take some methods "constant time"  */
     private int size;
     private TNode sentinel;
@@ -28,14 +29,10 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         sentinel = new TNode(null, null, null);
         sentinel.next = sentinel;
         sentinel.prev = sentinel;
+        recursionPos = sentinel;
     }
 
-    //    public LinkedListDeque(T x){
-//        size = 1;
-//        sentinel = new TNode(null,null,null);
-//        sentinel.next = new TNode(x,sentinel,sentinel);
-//        sentinel.prev = sentinel.next;
-//    }
+
     @Override
     public void addFirst(T x) {
         size = size + 1;
@@ -125,27 +122,15 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
         if (index == 0) {
-            return sentinel.next.item;
+            T res  = recursionPos.next.item;
+            recursionPos = sentinel;
+            return res;
         } else {
-            this.removeFirst();
+            recursionPos = recursionPos.next;
             return getRecursive(index - 1);
         }
     }
 
-
-    public boolean contains(T x) {
-        if (size == 0)
-            return false;
-
-        TNode node = sentinel.next;
-
-        while (node != sentinel) {
-            if (node.item == x)
-                return true;
-            node = node.next;
-        }
-        return false;
-    }
 
     @Override
     public boolean equals(Object other) {
@@ -164,7 +149,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
                 if (!item.equals(itemOther))
                     return false;
             }
-        }else {
+        } else {
             return false;
         }
 
