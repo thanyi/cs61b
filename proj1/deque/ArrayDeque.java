@@ -57,7 +57,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public void printDeque() {
         /* 保证循环 */
-        for (int i = (nextFirst + 1) % items.length; i != (nextLast - 1) % items.length; i = (i + 1) % items.length) {
+        int start = (nextFirst + 1) % items.length;
+        int end = (nextLast - 1 + items.length) % items.length;
+
+        for (int i = start; i != end; i = (i + 1) % items.length) {
             System.out.print(items[i] + " ");
         }
         System.out.println(items[(nextLast - 1) % items.length]);
@@ -171,7 +174,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private class ArrayDequeIterator implements Iterator {
         int wizPos;
 
-        public ArrayDequeIterator() {
+        ArrayDequeIterator() {
             wizPos = 0;
         }
 

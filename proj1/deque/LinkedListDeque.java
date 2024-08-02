@@ -19,6 +19,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             item = i;
         }
     }
+
     private TNode recursionPos;
     /* size to take some methods "constant time"  */
     private int size;
@@ -122,7 +123,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
         if (index == 0) {
-            T res  = recursionPos.next.item;
+            T res = recursionPos.next.item;
             recursionPos = sentinel;
             return res;
         } else {
@@ -134,20 +135,23 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other)
+        if (this == other) {
             return true;
+        }
 
 
         if (other instanceof Deque) {
             Deque<T> otherList = (Deque) other;
-            if (size != otherList.size())
+            if (size != otherList.size()) {
                 return false;
-
+            }
             for (int i = 0; i < size; i++) {
                 T item = get(i);
                 T itemOther = otherList.get(i);
-                if (!item.equals(itemOther))
+                if (!item.equals(itemOther)) {
                     return false;
+                }
+
             }
         } else {
             return false;
@@ -163,7 +167,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class LinkedListIterator implements Iterator {
         private TNode wizPos;
 
-        public LinkedListIterator() {
+        LinkedListIterator() {
             wizPos = sentinel.next;
         }
 
