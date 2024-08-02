@@ -172,7 +172,7 @@ public class LinkedListDequeTest {
     public void testEquals() {
         LinkedListDeque<String> wordList = new LinkedListDeque<String>();
         LinkedListDeque<String> wordList2 = new LinkedListDeque<String>();
-        LinkedListDeque<String> wordList3 = new LinkedListDeque<String>();
+        ArrayDeque<String> wordList3 = new ArrayDeque<String>();
 
         wordList.addLast("I");
         wordList.addLast("love");
@@ -182,14 +182,15 @@ public class LinkedListDequeTest {
         wordList2.addLast("love");
         wordList2.addLast("you");
 
-        wordList3.addLast("love");
         wordList3.addLast("I");
+        wordList3.addLast("love");
+
         wordList3.addLast("you");
 
 //        System.out.println(wordList.equals(wordList2));
 
 //        assertEquals("Should have the same value", true, item);
-        assertTrue("Should have the same value", wordList.equals(wordList2));
+        assertTrue("Should have the same value", wordList.equals(wordList3));
     }
 
 

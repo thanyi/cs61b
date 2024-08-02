@@ -89,11 +89,11 @@ public class ArrayDequeTest {
     public void addWithResizingTest2() {
         ArrayDeque<Integer> arrayDeque = new ArrayDeque<>();
 
-        for (int i = 0; i < 128; i++) {
+        for (int i = 0; i < 10000; i++) {
             arrayDeque.addLast(i);
         }
 
-        for (int i = 0; i <= 128-30; i++) {
+        for (int i = 0; i <9999; i++) {
             arrayDeque.removeLast();
         }
     }
@@ -248,7 +248,7 @@ public class ArrayDequeTest {
 
     @Test
     /* Tests removing from an empty deque */
-    public void testEqualsAndIter() {
+    public void testEqualsAndIterator() {
         ArrayDeque<String> wordList = new ArrayDeque<>();
         ArrayDeque<String> wordList2 = new ArrayDeque<>();
 
