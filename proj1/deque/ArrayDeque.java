@@ -94,8 +94,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
 
-        if (size < (items.length / 4) && size >= 16) {
-            resize((items.length / 4));
+        if (size < (items.length / 2) && size >= 16) {
+            resize((items.length / 2));
         }
 
         size -= 1;
@@ -115,8 +115,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
 
-        if (size <= items.length / 4 && size >= 16) {
-            resize((items.length / 4));
+        if (size <= items.length / 2 && size >= 16) {
+            resize((items.length / 2));
         }
 
         size -= 1;
@@ -155,8 +155,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             for (int i = 0; i < size; i++) {
                 T item = get(i);
                 T itemOther = otherList.get(i);
-                if (!item.equals(itemOther))
+                if (!item.equals(itemOther)) {
                     return false;
+                }
+
             }
 
         } else {

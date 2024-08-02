@@ -1,7 +1,7 @@
 package deque;
 
 import java.util.Iterator;
-import java.util.Objects;
+
 
 public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     /**
@@ -13,7 +13,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         private TNode prev;
 
 
-        public TNode(T i, TNode p, TNode n) {
+        TNode(T i, TNode p, TNode n) {
             prev = p;
             next = n;
             item = i;
