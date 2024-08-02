@@ -178,8 +178,8 @@ public class LinkedListDequeTest {
         wordList.addLast("love");
         wordList.addLast("you");
 
-        wordList2.addLast("love");
         wordList2.addLast("I");
+        wordList2.addLast("love");
         wordList2.addLast("you");
 
         wordList3.addLast("love");
