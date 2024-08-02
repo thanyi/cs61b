@@ -145,7 +145,8 @@ public class LinkedListDeque<Item> implements Deque<Item>,Iterable<Item> {
             return true;
 
 
-        if( other instanceof LinkedListDeque otherList){
+        if( other instanceof LinkedListDeque ){
+            LinkedListDeque<Item> otherList = (LinkedListDeque) other;
             if (size != otherList.size)
                 return false;
 
