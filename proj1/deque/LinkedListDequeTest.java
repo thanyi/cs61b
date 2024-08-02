@@ -1,6 +1,9 @@
 package deque;
 
 import org.junit.Test;
+
+import java.util.Iterator;
+
 import static org.junit.Assert.*;
 
 
@@ -138,4 +141,41 @@ public class LinkedListDequeTest {
         assertEquals("Should have the same value", "love", item);
     }
 
+
+    @Test
+    /* Tests removing from an empty deque */
+    public void testIterator() {
+        LinkedListDeque<String> wordList = new LinkedListDeque<String>();
+
+        wordList.addLast("I");
+        wordList.addLast("love");
+        wordList.addLast("you");
+//        Iterator<String> LinkedListIterator = wordList.iterator();
+        for(String s:wordList){
+            System.out.println(s);
+        }
+
+        System.out.println(wordList.contains("I"));
+//        assertEquals("Should have the same value", "love", item);
+    }
+
+
+    @Test
+    /* Tests removing from an empty deque */
+    public void testEquals() {
+        LinkedListDeque<String> wordList = new LinkedListDeque<String>();
+        LinkedListDeque<String> wordList2 = new LinkedListDeque<String>();
+
+        wordList.addLast("I");
+        wordList.addLast("love");
+        wordList.addLast("you");
+
+        wordList2.addLast("I");
+        wordList2.addLast("love");
+        wordList2.addLast("you");
+//        System.out.println(wordList.equals(wordList2));
+
+//        assertEquals("Should have the same value", true, item);
+        assertTrue("Should have the same value", wordList.equals(wordList2));
+    }
 }

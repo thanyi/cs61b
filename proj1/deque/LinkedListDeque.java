@@ -1,6 +1,9 @@
 package deque;
 
-public class LinkedListDeque<Item> implements Deque<Item> {
+import java.util.Iterator;
+import java.util.Objects;
+
+public class LinkedListDeque<Item> implements Deque<Item>,Iterable<Item> {
     /** subclass, which is used to represent the Node concept */
     private class ItemNode {
         public Item item;
@@ -119,6 +122,62 @@ public class LinkedListDeque<Item> implements Deque<Item> {
         }else {
             this.removeFirst();
             return getRecursive(index - 1);
+        }
+    }
+
+
+    public boolean contains(Item x){
+        if (size == 0)
+            return false;
+
+        ItemNode node = sentinel.next;
+
+        while(node != sentinel){
+            if (node.item == x)
+                return true;
+            node = node.next;
+        }
+        return false;
+    }
+    @Override
+    public boolean equals(Object other){
+        if(this == other)
+            return true;
+
+
+        if( other instanceof LinkedListDeque otherList){
+            if (size != otherList.size)
+                return false;
+
+            for(Item x : this){
+                if(!otherList.contains(x))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    public Iterator<Item> iterator(){
+        return new LinkedListIterator();
+    }
+
+    private class LinkedListIterator implements Iterator{
+        private ItemNode wizPos ;
+        public LinkedListIterator(){
+            wizPos = sentinel.next;
+        }
+        @Override
+        public boolean hasNext(){
+            return wizPos != sentinel;
+        }
+
+        @Override
+        public Item next() {
+            Item returnItem =  wizPos.item;
+
+            wizPos = wizPos.next;
+
+            return returnItem;
         }
     }
 }
