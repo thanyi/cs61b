@@ -1,6 +1,9 @@
 package capers;
 
 import java.io.File;
+import java.io.IOException;
+
+import static capers.Dog.DOG_FOLDER;
 import static capers.Utils.*;
 
 /** A repository for Capers 
@@ -18,7 +21,7 @@ public class CapersRepository {
     static final File CWD = new File(System.getProperty("user.dir"));
 
     /** Main metadata folder. */
-    static final File CAPERS_FOLDER = null; // TODO Hint: look at the `join`
+    static final File CAPERS_FOLDER = join(CWD,".capers"); // TODO Hint: look at the `join`
                                             //      function in Utils
 
     /**
@@ -32,6 +35,14 @@ public class CapersRepository {
      */
     public static void setupPersistence() {
         // TODO
+        CAPERS_FOLDER.mkdirs();
+        File capers_story = new File(CAPERS_FOLDER,"story");
+        try {
+            capers_story.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        DOG_FOLDER.mkdirs();
     }
 
     /**
@@ -41,6 +52,26 @@ public class CapersRepository {
      */
     public static void writeStory(String text) {
         // TODO
+        File capers_story = new File(CAPERS_FOLDER,"story");
+
+
+        try {
+            capers_story.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        byte[] readContents = readContents(capers_story);
+        String oldContents = new String(readContents);
+        if(oldContents.isEmpty()){
+            Utils.writeContents(capers_story, text);
+        }else {
+            Utils.writeContents(capers_story, oldContents ,"\n",text);
+        }
+
+        byte[] newReadContents = readContents(capers_story);
+        String newContents = new String(newReadContents);
+        System.out.println(newContents);
     }
 
     /**
@@ -50,6 +81,10 @@ public class CapersRepository {
      */
     public static void makeDog(String name, String breed, int age) {
         // TODO
+        String dogName = name;
+        Dog dogObWrite = new Dog(dogName, breed, age);
+        dogObWrite.saveDog();
+        System.out.println(dogObWrite);
     }
 
     /**
@@ -60,5 +95,9 @@ public class CapersRepository {
      */
     public static void celebrateBirthday(String name) {
         // TODO
+        Dog dogObRead = Dog.fromFile(name);
+
+        dogObRead.haveBirthday();
+        dogObRead.saveDog();
     }
 }

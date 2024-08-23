@@ -1,7 +1,11 @@
 package capers;
 
 import java.io.File;
+import java.io.IOException;
 
+import static capers.CapersRepository.celebrateBirthday;
+import static capers.CapersRepository.makeDog;
+import static capers.Dog.DOG_FOLDER;
 import static capers.Utils.*;
 
 /** Canine Capers: A Gitlet Prelude.
@@ -53,9 +57,11 @@ public class Main {
         case "dog":
             validateNumArgs("dog", args, 4);
             // TODO: make a dog
+            makeDog(args[1],args[2],Integer.parseInt(args[3]));
             break;
         case "birthday":
             validateNumArgs("birthday", args, 2);
+            celebrateBirthday(args[1]);
             // TODO: celebrate this dog's birthday
             break;
         default:
