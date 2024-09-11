@@ -155,4 +155,28 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         }
     }
 
+    /**
+     * 可以将BST以从小到大的顺序将每一项进行输出
+     * @return
+     */
+    public void printInOrder(){
+        printInOrder(root);
+    }
+
+    public void printInOrder(BSTNode node){
+        // 检查是否BST直接为空
+        if (node == null){
+           System.out.println("BST is Empty!");
+        }
+        // 查看左孩子是否存在，存在则进入
+        if (node.left != null){
+            printInOrder(node.left);
+        }
+
+        System.out.println(node.value);
+        // 查看右孩子是否存在，存在则进入
+        if (node.right != null) {
+            printInOrder(node.right);
+        }
+    }
 }

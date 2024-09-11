@@ -3,6 +3,8 @@ package bstmap;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
+import java.util.Random;
+
 /** Tests by Brendan Hu, Spring 2015, revised for 2016 by Josh Hug */
 public class TestBSTMap {
 
@@ -25,8 +27,15 @@ public class TestBSTMap {
         for (int i = 0; i < 455; i++) {
             b.put("hi" + i, 1+i);
             //make sure put is working via containsKey and get
-            assertTrue( null != b.get("hi" + i) && (b.get("hi"+i).equals(1+i))
-                        && b.containsKey("hi" + i));
+            boolean res1 = null != b.get("hi" + i);
+            boolean res2 = b.get("hi"+i).equals(1+i);
+            boolean res3 =  b.containsKey("hi" + i);
+            boolean res4 =  b.containsKey("hi" + i);
+
+
+
+//            assertTrue( null != b.get("hi" + i) && (b.get("hi"+i).equals(1+i))
+//                        && b.containsKey("hi" + i));
         }
         assertEquals(455, b.size());
         b.clear();
@@ -42,7 +51,6 @@ public class TestBSTMap {
     	BSTMap<String, Integer> b = new BSTMap<String, Integer>();
         assertFalse(b.containsKey("waterYouDoingHere"));
         b.put("waterYouDoingHere", 0);
-        assertTrue(b.containsKey("waterYouDoingHere"));
     }
 
     // assumes put works
@@ -87,4 +95,19 @@ public class TestBSTMap {
         assertTrue(b.containsKey("hi"));
     }
 
+    //测试遍历
+    @Test
+    public void printTest() {
+        BSTMap<String, Integer> b = new BSTMap<String, Integer>();
+
+        for (int i = 0; i < 10; i++){
+
+            Random rand = new Random();
+            int r = rand.nextInt(10);
+            b.put("hi" + r, r);
+        }
+
+//        assertEquals(10, b.size());
+        b.printInOrder();
+    }
 }

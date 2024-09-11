@@ -8,12 +8,12 @@ import static capers.CapersRepository.CAPERS_FOLDER;
 import static capers.Utils.*;
 
 /** Represents a dog that can be serialized.
- * @author TODO
+ * @author ethanyi
 */
-public class Dog implements Serializable{ // TODO
+public class Dog implements Serializable{
 
     /** Folder that dogs live in. */
-    static final File DOG_FOLDER = join(CAPERS_FOLDER,"dogs"); // TODO (hint: look at the `join`
+    static final File DOG_FOLDER = join(CAPERS_FOLDER,"dogs");
                                          //      function in Utils)
 
     /** Age of dog. */
@@ -70,19 +70,9 @@ public class Dog implements Serializable{ // TODO
     public void saveDog() {
         // TODO (hint: don't forget dog names are unique)
 
-        Dog dogObWrite = new Dog(name, breed, age);
+//        Dog dogObWrite = new Dog(name, breed, age);
         File dogFile = new File(DOG_FOLDER, name);
-
-        /* 进行序列化操作，保存至文件中,同时打印 */
-        if (!dogFile.exists()){
-            try {
-                dogFile.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        writeObject(dogFile,dogObWrite);
+        writeObject(dogFile,this);
     }
 
     @Override

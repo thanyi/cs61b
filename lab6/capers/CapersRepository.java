@@ -36,12 +36,6 @@ public class CapersRepository {
     public static void setupPersistence() {
         // TODO
         CAPERS_FOLDER.mkdirs();
-        File capers_story = new File(CAPERS_FOLDER,"story");
-        try {
-            capers_story.createNewFile();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         DOG_FOLDER.mkdirs();
     }
 
