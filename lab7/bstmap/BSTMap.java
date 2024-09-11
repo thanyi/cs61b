@@ -163,7 +163,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         printInOrder(root);
     }
 
-    public void printInOrder(BSTNode node){
+    private void printInOrder(BSTNode node){
         // 检查是否BST直接为空
         if (node == null){
            System.out.println("BST is Empty!");
