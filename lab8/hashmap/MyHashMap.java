@@ -120,13 +120,13 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * 使用mod运算
      * @return 第几个bucket
      */
-    public int hash(K key) {
+    private int hash(K key) {
         // buckets中的序列号
         int hashNum = key.hashCode();
         return Math.floorMod(hashNum, buckets.length);
     }
 
-    public int hash(K key, Collection[] buckets) {
+    private int hash(K key, Collection[] buckets) {
         // buckets中的序列号
         int hashNum = key.hashCode();
         return Math.floorMod(hashNum, buckets.length);
@@ -189,7 +189,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * 如果此时 keySize / buckets.length > loadFactor
      * 则需要重新进行buckets的大小设计
      */
-    public void resize(int size){
+    private void resize(int size){
         Collection<Node>[] tmpTable = createTable(size);
         Collection<Node>[] oldbuckets = this.buckets;
 
