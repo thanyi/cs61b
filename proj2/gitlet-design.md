@@ -1,24 +1,35 @@
 # Gitlet Design Document
 
-**Name**:
+**Name**: ethanyi9
 
 ## Classes and Data Structures
 
-### Class 1
+### Class 1: Commit
 
-#### Fields
+对于需要**提交**的文件的类
 
-1. Field 1
-2. Field 2
+#### Instance Variables
 
+- String message: 保存commit提交的评论
+- timestamp: 提交时间，第一个是 Date(0)，根据Date对象进行
+- parent: 这个commit的上一个commit。
+- blobHashName: 将commit的内容进行的hash值，值表示的是内容的hash
 
-### Class 2
+#### Methods
+- getUid: 获取commit的sha-1 hash值，包括上面的局部变量
+- saveCommit: 将对象保存进文件中
 
-#### Fields
+### Class 2 Refs
 
-1. Field 1
-2. Field 2
+About HEAD structure.
+#### Instance Variables
 
+- REFS_DIR: ".gitlet/refs"文件夹
+- HEAD_DIR: ".gitlet/refs/heads" 文件夹
+- HEAD_CONTENT_PATH: ".gitlet/HEAD" 文件
+
+#### Methods
+- saveHead: Save HEAD file and branch file which contains the hash of current commit
 
 ## Algorithms
 
