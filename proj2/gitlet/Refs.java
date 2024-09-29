@@ -2,7 +2,6 @@ package gitlet;
 
 import java.io.File;
 
-import static gitlet.Commit.COMMIT_FOLDER;
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
@@ -10,12 +9,6 @@ import static gitlet.Utils.*;
  * Represent the reference point of HEAD, REMOTE and so on;
  */
 public class Refs {
-    /* The .gitlet/refs directory. */
-    public static final File REFS_DIR = join(GITLET_DIR, "refs");
-    /* The .gitlet/heads directory. */
-    public static final File HEAD_DIR = join(REFS_DIR, "heads");
-    /* the current .gitlet/HEAD file */
-    public static final File HEAD_CONTENT_PATH = join(REFS_DIR, "HEAD");
 
 
     /**
@@ -24,13 +17,19 @@ public class Refs {
      * @param branchName: the name of current branch
      * @param hashName:   the uid of current commit
      */
-    public static void saveHead(String branchName, String hashName) {
-        // save the master(current branch) file
+    public static void saveBranch(String branchName, String hashName) {
+        // save the file of the head of a given branch
         File branch_head = join(HEAD_DIR, branchName);
         writeContents(branch_head, hashName);
 
-        String HEAD_content = branch_head.getPath();
-        writeContents(HEAD_CONTENT_PATH, "refs:", HEAD_content);
     }
 
+    /**
+     * Save the point to HEAD into .gitlet/HEAD folder
+     * @param branch_head File obj of the HEAD point path
+     */
+    public static void saveHEAD(File branch_head) {
+        String HEAD_content = branch_head.getPath();
+        writeContents(HEAD_CONTENT_PATH, HEAD_content);
+    }
 }

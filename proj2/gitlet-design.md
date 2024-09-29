@@ -2,6 +2,8 @@
 
 **Name**: ethanyi9
 
+目前init指令已完成
+
 ## Classes and Data Structures
 
 ### Class 1: Commit
@@ -32,6 +34,25 @@ About HEAD structure.
 - saveHead: Save HEAD file and branch file which contains the hash of current commit
 
 ## Algorithms
+
+### init
+创建一个文件夹环境
+
+```
+.gitlet (folder)
+    |── objects (folder) // 存储commit对象文件
+        |-- commits
+        |-- blobs
+    |── refs (folder)
+        |── heads (folder) //指向目前的branch
+            |-- master (file)
+            |-- other file      //表示其他分支的路径
+    |-- HEAD (file)     // 保存HEAD指针的对应hashname
+    |-- addstage (folder)       // 暂存区文件夹
+    |-- removestage (folder)
+```
+    
+
 
 ## Persistence
 

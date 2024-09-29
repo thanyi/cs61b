@@ -1,7 +1,6 @@
 package gitlet;
 
-import static gitlet.Repository.checkArgsEmpty;
-import static gitlet.Repository.initPersistence;
+import static gitlet.Repository.*;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author TODO
@@ -18,14 +17,21 @@ public class Main {
 
         switch(firstArg) {
             case "init":
-                // TODO: handle the `init` command
+                // 如果存在参数数量上的错误
+                if (args.length != 1){
+                    System.out.println("Incorrect operands.");
+                }
                 initPersistence();
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command\
                 String addFileName = args[1];
-
+                addStage(addFileName);
                 break;
+            case "commit":
+                String commitMsg = args[1];
+
+
             // TODO: FILL THE REST IN
         }
     }

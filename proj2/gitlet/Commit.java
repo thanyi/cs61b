@@ -39,8 +39,7 @@ public class Commit implements Serializable {
     /* the contents of commit files*/
     private String blobHashName;
 
-    static final File COMMIT_FOLDER = join(GITLET_DIR, "objects");
-    static final File HEAD_PATH = join(GITLET_DIR, "HEAD");
+
 
     public Commit(String message, Date timestamp, String parent, String blobHashName) {
         this.message = message;
@@ -48,6 +47,13 @@ public class Commit implements Serializable {
         this.parent = parent;
         this.blobHashName = blobHashName;
 
+    }
+
+    public Commit(Commit parent) {
+        this.message = parent.message;
+        this.timestamp = parent.timestamp;
+        this.parent = parent.parent;
+        this.blobHashName = parent.blobHashName;
     }
 
 
@@ -69,4 +75,14 @@ public class Commit implements Serializable {
     public String getUid() {
         return sha1(this.message, dateToTimeStamp(this.timestamp), this.parent, this.blobHashName);
     }
+
+    public void setParent(String parent) {
+        this.parent = parent;
+    }
+
+    public String getParent() {
+        return parent;
+    }
+
+
 }

@@ -1,33 +1,48 @@
 package gitlet;
 
 import java.io.File;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
 
-import static gitlet.Commit.COMMIT_FOLDER;
+import static gitlet.Commit.*;
 import static gitlet.Refs.*;
 import static gitlet.Utils.*;
 import static java.lang.System.exit;
 
 // TODO: any imports you need here
 
-/** Represents a gitlet repository.
+/**
+ * Represents a gitlet repository.
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author ethanyi
+ * @author ethanyi
  */
 public class Repository {
     /**
      * TODO: add instance variables here.
-     *
+     * <p>
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
+     * <p>
+     * <p>
+     * the path we created as below:
+     * <p>
+     * .gitlet (folder)
+     * |── objects (folder) // 存储commit对象文件
+     * |-- commits
+     * |-- blobs
+     * |── refs (folder)
+     * |── heads (folder) //指向目前的branch
+     * |-- master (file)
+     * |-- other file      //表示其他分支的路径
+     * |-- HEAD (file)     // 保存HEAD指针的对应hashname
+     * |-- addstage (folder)       // 暂存区文件夹
+     * |-- removestage (folder)
      */
 
     /* The current working directory. */
@@ -35,28 +50,47 @@ public class Repository {
     /* The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
+    /* the objects directory */
+    static final File OBJECTS_FOLDER = join(GITLET_DIR, "objects");
+    static final File COMMIT_FOLDER = join(OBJECTS_FOLDER, "commits");
+    static final File BLOBS_FOLDER = join(OBJECTS_FOLDER, "blobs");
+
+    /* The refs directory. */
+    public static final File REFS_DIR = join(GITLET_DIR, "refs");
+    public static final File HEAD_DIR = join(REFS_DIR, "heads");
+
+    /* the current .gitlet/HEAD file */
+    public static final File HEAD_CONTENT_PATH = join(REFS_DIR, "HEAD");
+
+    /* the stage directory */
+    public static final File ADD_STAGE_DIR = join(GITLET_DIR, "addstage");
+    public static final File REMOVE_STAGE_DIR = join(GITLET_DIR, "removestage");
+
 
 
     /* TODO: fill in the rest of this class. */
 
     /**
-     *  initialize the folder instructure
+     * initialize the folder instructure
      */
     public static void setupPersistence() {
-
         GITLET_DIR.mkdirs();
         COMMIT_FOLDER.mkdirs();
+        BLOBS_FOLDER.mkdirs();
         REFS_DIR.mkdirs();
         HEAD_DIR.mkdirs();
+        ADD_STAGE_DIR.mkdirs();
+        REMOVE_STAGE_DIR.mkdirs();
 
     }
 
     /**
      * Check if the ARGS of java gitlet.Main is empty
+     *
      * @param args
      */
-    public static void checkArgsEmpty(String[] args){
-        if (args.length == 0){
+    public static void checkArgsEmpty(String[] args) {
+        if (args.length == 0) {
             System.out.println("Please enter a command.");
             exit(0);
         }
@@ -64,12 +98,28 @@ public class Repository {
 
     /**
      * To get Date obj a format to transform the object to String.
-     * @param date
-     * @return
+     *
+     * @param date a Date obj
+     * @return timestamp in standrad format
      */
     public static String dateToTimeStamp(Date date) {
         DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
         return dateFormat.format(date);
+    }
+
+
+    /**
+     * To save some Commit objects into files .
+     *
+     * @apiNote 暂时没有用到
+     */
+    public void saveObject2File(File path, Commit obj) {
+        // get the uid of this
+        String hashname = obj.getUid();
+
+        // write obj to files
+        File commitFile = new File(COMMIT_FOLDER, hashname);
+        writeObject(commitFile, obj);
     }
 
     /**
@@ -82,43 +132,90 @@ public class Repository {
      * all repositories will automatically share this commit (they will all have the same UID) and all commits in all
      * repositories will trace back to it.
      */
-    public static void initPersistence(){
-        // if .gitlet already exists
-        if(GITLET_DIR.exists()){
+    public static void initPersistence() {
+        // if .gitlet dir existed
+        if (GITLET_DIR.exists()) {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
             exit(0);
         }
-        // initialize the directories
+        // create the folders in need
         setupPersistence();
-        // initialize and save the object
+        // create timestamp,Commit and save commit into files
         Date timestamp_init = new Date(0);
-        Commit initialCommit = new Commit("initial commit", timestamp_init, "","");
+        Commit initialCommit = new Commit("initial commit", timestamp_init, "", "");
         initialCommit.saveCommit();
 
-        // get the hashName of the object
+        // save the hashname to heads dir
         String commitHashName = initialCommit.getUid();
-        saveHead("master",commitHashName);
+        saveBranch("master", commitHashName);
 
-
-        //TODO: branches: the master point which points to commit
+        // 将此时的HEAD指针指向commit
+        saveHEAD(join(COMMIT_FOLDER, commitHashName));
 
     }
 
     /**
-     *  Adds a copy of the file as it currently exists to the staging area (see the description of the commit command).
-     *  For this reason, adding a file is also called staging the file for addition. Staging an already-staged file
-     *  overwrites the previous entry in the staging area with the new contents. The staging area should be somewhere in
-     *  .gitlet. If the current working version of the file is identical to the version in the current commit, do not
-     *  stage it to be added, and remove it from the staging area if it is already there (as can happen when a file is
-     *  changed, added, and then changed back to it’s original version). The file will no longer be staged for removal
-     *  (see gitlet rm), if it was at the time of the command.
+     * Adds a copy of the file as it currently exists to the staging area (see the description of the commit command).
+     * For this reason, adding a file is also called staging the file for addition.
+     * - Staging an already-staged file overwrites the previous entry in the staging area with the new contents.
+     * - The staging area should be somewhere in .gitlet.
+     * If the current working version of the file is identical to the version in the current commit, do not stage it to be added,
+     * and remove it from the staging area if it is already there (as can happen when a file is changed, added, and then changed back to it’s original version).
+     * The file will no longer be staged for removal (see gitlet rm), if it was at the time of the command.
      *
-     *  @param addFileName:
+     * @param addFileName
+     * @apiNote 这个函数用于实现git add
      */
-    public static void addFile(String addFileName){
+    public static void addStage(String addFileName) {
+        /* 如果文件名是空 */
+        if (addFileName == null || addFileName.isEmpty()) {
+            System.out.println("Please enter a file name.");
+            exit(0);
+        }
+        /* 如果在工作目录中不存在此文件 */
+        List<String> fileNames = plainFilenamesIn(CWD);
+        if(!fileNames.contains(addFileName)) {
+            System.out.println("File does not exist.");
+            exit(0);
+        }
 
+        /* 将文件放入暂存区，文件名是内容的hash值，内容是源文件内容 */
+        File fileAdded = join(CWD, addFileName);
+        String fileContent = readContentsAsString(fileAdded);
+        String blobName = sha1(fileContent);
+        File blobPath = join(BLOBS_FOLDER, blobName);
+        writeContents(blobPath,fileContent);
 
+        /* 不管原先是否存在，都会执行写逻辑*/
+        /* addStage中写入指针,文件名是addFileName, 内容是暂存区保存的路径 */
+        File blobPoint = join(BLOBS_FOLDER, addFileName);
+        writeContents(blobPoint,blobPath);
     }
 
+    /**
+     * Saves a snapshot of tracked files in the current commit and staging area so they can be restored at a later time,
+     * creating a new commit. The commit is said to be tracking the saved files.
+     *
+     * By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files;
+     * it will keep versions of files exactly as they are, and not update them.
+     * A commit will only update the contents of files it is tracking that have been staged for addition at the time of commit,
+     * in which case the commit will now include the version of the file that was staged instead of the version it got from its parent.
+     * A commit will save and start tracking any files that were staged for addition but weren’t tracked by its parent.
+     * Finally, files tracked in the current commit may be untracked in the new commit as a result being staged for removal by the rm command (below).
+     */
+    public static void commitFile(String commitMsg) {
+        /* 获取HEAD指针,这个指针指向目前最新的commit */
+        String headHashName = readContentsAsString(HEAD_CONTENT_PATH);
+        File commitFile = join(COMMIT_FOLDER, headHashName);
+
+        /* 获取最新的commit*/
+        Commit oldCommit = readObject(commitFile,Commit.class);
+        assert Objects.equals(oldCommit.getParent(), headHashName);
+
+        Commit newCommit = new Commit(oldCommit);
+        newCommit.setParent(headHashName);
+
+        //todo:需要完成通过stage对commit的修改操作
+    }
 
 }
