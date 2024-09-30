@@ -17,7 +17,7 @@ public class Main {
 
         switch(firstArg) {
             case "init":
-                // 如果存在参数数量上的错误
+                //
                 if (args.length != 1){
                     System.out.println("Incorrect operands.");
                 }
@@ -30,7 +30,7 @@ public class Main {
                 break;
             case "commit":
                 String commitMsg = args[1];
-
+                commitFile(commitMsg);
 
             // TODO: FILL THE REST IN
         }

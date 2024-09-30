@@ -3,16 +3,12 @@ package gitlet;
 // TODO: any imports you need here
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date; // TODO: You'll likely use this in this class
-import java.util.Locale;
+import java.util.HashMap;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
-import static gitlet.Refs.*;
 
 /**
  * Represents a gitlet commit object.
@@ -37,15 +33,21 @@ public class Commit implements Serializable {
     /* the timestamp of commit*/
     private Date timestamp;
     /* the contents of commit files*/
-    private String blobHashName;
+//    private String blobNames;
+    private HashMap<String,String> blobMap = new HashMap<>();
 
 
-
-    public Commit(String message, Date timestamp, String parent, String blobHashName) {
+    public Commit(String message, Date timestamp, String parent, String fileName, String blobName) {
         this.message = message;
         this.timestamp = timestamp;
         this.parent = parent;
-        this.blobHashName = blobHashName;
+        if(fileName == null || fileName.isEmpty()){
+            this.blobMap = new HashMap<>();
+        }else {
+            this.blobMap.put(fileName, blobName) ;
+        }
+
+
 
     }
 
@@ -53,7 +55,7 @@ public class Commit implements Serializable {
         this.message = parent.message;
         this.timestamp = parent.timestamp;
         this.parent = parent.parent;
-        this.blobHashName = parent.blobHashName;
+        this.blobMap = parent.blobMap;
     }
 
 
@@ -65,15 +67,25 @@ public class Commit implements Serializable {
      */
     public void saveCommit() {
         // get the uid of this
-        String hashname = this.getUid();
+        String hashname = this.getHashName();
 
         // write obj to files
         File commitFile = new File(COMMIT_FOLDER, hashname);
         writeObject(commitFile, this);
     }
 
-    public String getUid() {
-        return sha1(this.message, dateToTimeStamp(this.timestamp), this.parent, this.blobHashName);
+
+    /**
+     *
+     * @param blobName blob的hashname
+     */
+    public void addBlob(String fileName, String blobName) {
+        this.blobMap.put(fileName, blobName);
+    }
+
+
+    public String getHashName() {
+        return sha1(this.message, dateToTimeStamp(this.timestamp), this.parent);
     }
 
     public void setParent(String parent) {
@@ -83,6 +95,16 @@ public class Commit implements Serializable {
     public String getParent() {
         return parent;
     }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
+    }
+
+
 
 
 }

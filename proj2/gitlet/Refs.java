@@ -29,7 +29,7 @@ public class Refs {
      * @param branch_head File obj of the HEAD point path
      */
     public static void saveHEAD(File branch_head) {
-        String HEAD_content = branch_head.getPath();
-        writeContents(HEAD_CONTENT_PATH, HEAD_content);
+        String HEAD_content = branch_head.getName();
+        writeContents(HEAD_POINT, HEAD_content);
     }
 }

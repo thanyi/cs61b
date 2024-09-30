@@ -1,13 +1,10 @@
 package gitlet;
 
 import java.io.File;
-import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.*;
 
-import static gitlet.Commit.*;
 import static gitlet.Refs.*;
 import static gitlet.Utils.*;
 import static java.lang.System.exit;
@@ -60,7 +57,7 @@ public class Repository {
     public static final File HEAD_DIR = join(REFS_DIR, "heads");
 
     /* the current .gitlet/HEAD file */
-    public static final File HEAD_CONTENT_PATH = join(REFS_DIR, "HEAD");
+    public static final File HEAD_POINT = join(REFS_DIR, "HEAD");
 
     /* the stage directory */
     public static final File ADD_STAGE_DIR = join(GITLET_DIR, "addstage");
@@ -115,7 +112,7 @@ public class Repository {
      */
     public void saveObject2File(File path, Commit obj) {
         // get the uid of this
-        String hashname = obj.getUid();
+        String hashname = obj.getHashName();
 
         // write obj to files
         File commitFile = new File(COMMIT_FOLDER, hashname);
@@ -142,11 +139,11 @@ public class Repository {
         setupPersistence();
         // create timestamp,Commit and save commit into files
         Date timestamp_init = new Date(0);
-        Commit initialCommit = new Commit("initial commit", timestamp_init, "", "");
+        Commit initialCommit = new Commit("initial commit", timestamp_init, "", null,null);
         initialCommit.saveCommit();
 
         // save the hashname to heads dir
-        String commitHashName = initialCommit.getUid();
+        String commitHashName = initialCommit.getHashName();
         saveBranch("master", commitHashName);
 
         // 将此时的HEAD指针指向commit
@@ -183,13 +180,14 @@ public class Repository {
         File fileAdded = join(CWD, addFileName);
         String fileContent = readContentsAsString(fileAdded);
         String blobName = sha1(fileContent);
-        File blobPath = join(BLOBS_FOLDER, blobName);
-        writeContents(blobPath,fileContent);
+
+        Blob blobAdd = new Blob(fileContent, blobName); // 使用blob进行对象化管理
+        blobAdd.saveBlob();
 
         /* 不管原先是否存在，都会执行写逻辑*/
         /* addStage中写入指针,文件名是addFileName, 内容是暂存区保存的路径 */
-        File blobPoint = join(BLOBS_FOLDER, addFileName);
-        writeContents(blobPoint,blobPath);
+        File blobPoint = join(ADD_STAGE_DIR, addFileName);
+        writeContents(blobPoint, blobAdd.filePath.getName());
     }
 
     /**
@@ -204,18 +202,48 @@ public class Repository {
      * Finally, files tracked in the current commit may be untracked in the new commit as a result being staged for removal by the rm command (below).
      */
     public static void commitFile(String commitMsg) {
+        /* 获取addstage中的filename和hashname */
+        List<String> fileNames = plainFilenamesIn(ADD_STAGE_DIR);
+        /* 错误的情况，直接返回 */
+        if(fileNames.isEmpty()){
+            System.out.println("No changes added to the commit.");;
+            exit(0);
+        }
+
+        if (commitMsg == null){
+            System.out.println("Please enter a commit message.");
+            exit(0);
+        }
+
+
         /* 获取HEAD指针,这个指针指向目前最新的commit */
-        String headHashName = readContentsAsString(HEAD_CONTENT_PATH);
+        String headHashName = readContentsAsString(HEAD_POINT);
         File commitFile = join(COMMIT_FOLDER, headHashName);
 
         /* 获取最新的commit*/
         Commit oldCommit = readObject(commitFile,Commit.class);
-        assert Objects.equals(oldCommit.getParent(), headHashName);
 
+        /* 创建新的commit，newCommit根据oldCommit进行调整*/
         Commit newCommit = new Commit(oldCommit);
-        newCommit.setParent(headHashName);
+        newCommit.setParent(headHashName);  // 指定父节点
+        newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
 
-        //todo:需要完成通过stage对commit的修改操作
+//        System.out.println("newCommit initialized! ");
+        //todo:需要完成通过stage对commit的add操作
+
+        /* 对每一个addstage中的fileName进行其路径的读取 */
+        for(String stageFileName : fileNames) {
+            String hashName = readContentsAsString(join(ADD_STAGE_DIR, stageFileName));
+            newCommit.addBlob(stageFileName, hashName);     // 在newCommit中更新blob
+            join(ADD_STAGE_DIR,stageFileName).delete();
+        }
+
+        newCommit.saveCommit();
+
+        /* 更新HEAD指针和master指针 */
+        saveHEAD(join(COMMIT_FOLDER, newCommit.getHashName()));
+        saveBranch("master", newCommit.getHashName());
+
     }
 
 }
