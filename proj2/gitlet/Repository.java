@@ -97,6 +97,15 @@ public class Repository {
         writeObject(commitFile, obj);
     }
 
+
+    public static void printCommitLog(Commit commit) {
+        System.out.println("===");
+        System.out.println("commit " + commit.getHashName());
+        System.out.println("Date: " + dateToTimeStamp(commit.getTimestamp()));
+        System.out.println(commit.getMessage());
+        System.out.print("\n");
+    }
+
     /* ---------------------- 功能函数实现 --------------------- */
 
     /**
@@ -119,7 +128,7 @@ public class Repository {
         setupPersistence();
         // create timestamp,Commit and save commit into files
         Date timestamp_init = new Date(0);
-        Commit initialCommit = new Commit("initial commit", timestamp_init, "", null,null);
+        Commit initialCommit = new Commit("initial commit", timestamp_init, "", null, null);
         initialCommit.saveCommit();
 
         // save the hashname to heads dir
@@ -151,7 +160,7 @@ public class Repository {
         }
         /* 如果在工作目录中不存在此文件 */
         List<String> fileNames = plainFilenamesIn(CWD);
-        if(!fileNames.contains(addFileName)) {
+        if (!fileNames.contains(addFileName)) {
             System.out.println("File does not exist.");
             exit(0);
         }
@@ -173,7 +182,7 @@ public class Repository {
     /**
      * Saves a snapshot of tracked files in the current commit and staging area so they can be restored at a later time,
      * creating a new commit. The commit is said to be tracking the saved files.
-     *
+     * <p>
      * By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files;
      * it will keep versions of files exactly as they are, and not update them.
      * A commit will only update the contents of files it is tracking that have been staged for addition at the time of commit,
@@ -186,12 +195,13 @@ public class Repository {
         List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
         List<String> removeStageFiles = plainFilenamesIn(REMOVE_STAGE_DIR);
         /* 错误的情况，直接返回 */
-        if(addStageFiles.isEmpty() && removeStageFiles.isEmpty()){
-            System.out.println("No changes added to the commit.");;
+        if (addStageFiles.isEmpty() && removeStageFiles.isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            ;
             exit(0);
         }
 
-        if (commitMsg == null){
+        if (commitMsg == null) {
             System.out.println("Please enter a commit message.");
             exit(0);
         }
@@ -204,24 +214,25 @@ public class Repository {
         Commit newCommit = new Commit(oldCommit);
         newCommit.setParent(oldCommit.getHashName());  // 指定父节点
         newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
+        newCommit.setMessage(commitMsg); // 修改新一次的commit的时间戳为目前时间
 
 
         /* 对每一个addstage中的fileName进行其路径的读取，保存进commit的blobMap */
-        for(String stageFileName : addStageFiles) {
+        for (String stageFileName : addStageFiles) {
             String hashName = readContentsAsString(join(ADD_STAGE_DIR, stageFileName));
             newCommit.addBlob(stageFileName, hashName);     // 在newCommit中更新blob
-            join(ADD_STAGE_DIR,stageFileName).delete();
+            join(ADD_STAGE_DIR, stageFileName).delete();
         }
 
         HashMap<String, String> blobMap = newCommit.getBlobMap();
 
         /* 对每一个rmstage中的fileName进行其路径的读取，删除commit的blobMap中对应的值 */
-        for(String stageFileName : removeStageFiles) {
+        for (String stageFileName : removeStageFiles) {
             if (blobMap.containsKey(stageFileName)) {
                 join(BLOBS_FOLDER, blobMap.get(stageFileName)).delete(); // 删除blobs中的文件
                 newCommit.removeBlob(stageFileName);   // 在newCommit中删除removeStage中的blob
             }
-            join(REMOVE_STAGE_DIR,stageFileName).delete();
+            join(REMOVE_STAGE_DIR, stageFileName).delete();
         }
 
         newCommit.saveCommit();
@@ -236,11 +247,12 @@ public class Repository {
      * Unstage the file if it is currently staged for addition.
      * If the file is tracked in the current commit, stage it for removal and remove the file from
      * the working directory if the user has not already done so (do not remove it unless it is tracked in the current commit).
+     *
      * @param removeFileName 指定删除的文件名
      */
     public static void removeStage(String removeFileName) {
         /* 如果文件名是空 */
-        if (removeFileName == null ) {
+        if (removeFileName == null) {
             System.out.println("Please enter a file name.");
             exit(0);
         }
@@ -249,7 +261,7 @@ public class Repository {
         Commit headCommit = getHeadCommit();
         HashMap<String, String> blobMap = headCommit.getBlobMap();
         List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
-        if(!addStageFiles.contains(removeFileName) && !blobMap.containsKey(removeFileName) ) {
+        if (!addStageFiles.contains(removeFileName) && !blobMap.containsKey(removeFileName)) {
             System.out.println("No reason to remove the file.");
             exit(0);
         }
@@ -266,5 +278,37 @@ public class Repository {
         File fileDeleted = new File(CWD, removeFileName);
         fileDeleted.delete();
     }
+
+    /**
+     * Starting at the current head commit, display information about each commit backwards along the commit tree until the initial commit, following the first parent commit links, ignoring any second parents found in merge commits. (In regular Git, this is what you get with git log --first-parent). This set of commit nodes is called the commit’s history. For every node in this history, the information it should display is the commit id, the time the commit was made, and the commit message.
+     */
+    public static void printLog() {
+
+        Commit headCommit = getHeadCommit();
+        Commit commit = headCommit;
+
+        while (!commit.getParent().equals("")) {
+            printCommitLog(commit);
+            commit = getCommit(commit.getParent());
+        }
+        /* 打印最开始的一项*/
+        printCommitLog(commit);
+    }
+
+
+    /**
+     * Like log, except displays information about all commits ever made. The order of the commits does not matter. Hint: there is a useful method in gitlet.Utils that will help you iterate over files within a directory.
+     *
+     * @apiNote 这是不关注分支，只是把文件夹中的内容都打印出来了
+     */
+    public static void printGlobalLog() {
+
+        List<String> commitFiles = plainFilenamesIn(COMMIT_FOLDER);
+        for (String commitFileName : commitFiles) {
+            Commit commit = getCommit(commitFileName);
+            printCommitLog(commit);
+        }
+    }
+
 
 }

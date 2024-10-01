@@ -6,9 +6,12 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Date; // TODO: You'll likely use this in this class
 import java.util.HashMap;
+import java.util.List;
+
 import static gitlet.Refs.*;
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
+import static java.lang.System.exit;
 
 /**
  * Represents a gitlet commit object.
@@ -34,17 +37,17 @@ public class Commit implements Serializable {
     private Date timestamp;
     /* the contents of commit files*/
 //    private String blobNames;
-    private HashMap<String,String> blobMap = new HashMap<>();
+    private HashMap<String, String> blobMap = new HashMap<>();
+    private String branchName = "master";
 
-
-    public Commit(String message, Date timestamp, String parent, String fileName, String blobName) {
+    public Commit(String message, Date timestamp, String parent, String blobFileName, String blobHashName) {
         this.message = message;
         this.timestamp = timestamp;
         this.parent = parent;
-        if(fileName == null || fileName.isEmpty()){
+        if (blobFileName == null || blobFileName.isEmpty()) {
             this.blobMap = new HashMap<>();
-        }else {
-            this.blobMap.put(fileName, blobName) ;
+        } else {
+            this.blobMap.put(blobFileName, blobHashName);
         }
     }
 
@@ -73,7 +76,6 @@ public class Commit implements Serializable {
 
 
     /**
-     *
      * @param blobName blob的hashname
      */
     public void addBlob(String fileName, String blobName) {
@@ -110,19 +112,48 @@ public class Commit implements Serializable {
         return blobMap;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
     /**
      * 用于获取HEAD指针指向的Commit对象
+     *
      * @return
      */
-    public static Commit getHeadCommit(){
+    public static Commit getHeadCommit() {
         /* 获取HEAD指针,这个指针指向目前最新的commit */
         String headHashName = readContentsAsString(HEAD_POINT);
         File commitFile = join(COMMIT_FOLDER, headHashName);
         /* 如果在commit中不存在此文件 */
-        Commit commit = readObject(commitFile,Commit.class);
+        Commit commit = readObject(commitFile, Commit.class);
 
         return commit;
 
     }
+
+
+    /**
+     * 通过hashname来获取Commit对象
+     *
+     * @param hashName
+     * @return
+     */
+    public static Commit getCommit(String hashName) {
+        List<String> commitFiles = plainFilenamesIn(COMMIT_FOLDER);
+        /* 如果在commit文件夹中不存在此文件 */
+        if (!commitFiles.contains(hashName)) {
+            System.out.println("No such file or directory in COMMIT_FOLDER：" + hashName.toString());
+            exit(0);
+        }
+        File commitFile = join(COMMIT_FOLDER, hashName);
+        Commit commit = readObject(commitFile, Commit.class);
+        return commit;
+    }
+
 
 }

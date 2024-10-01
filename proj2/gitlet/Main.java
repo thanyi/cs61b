@@ -36,6 +36,18 @@ public class Main {
                 String removeFile = args[1];
                 removeStage(removeFile);
                 break;
+            case "log":
+                if (args.length != 1){
+                    System.out.println("Incorrect operands.");
+                }
+                printLog();
+                break;
+            case "global-log":
+                if (args.length != 1){
+                    System.out.println("Incorrect operands.");
+                }
+                printGlobalLog();
+                break;
             // TODO: FILL THE REST IN
         }
     }
