@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Date; // TODO: You'll likely use this in this class
 import java.util.HashMap;
-
+import static gitlet.Refs.*;
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
@@ -46,9 +46,6 @@ public class Commit implements Serializable {
         }else {
             this.blobMap.put(fileName, blobName) ;
         }
-
-
-
     }
 
     public Commit(Commit parent) {
@@ -83,6 +80,10 @@ public class Commit implements Serializable {
         this.blobMap.put(fileName, blobName);
     }
 
+    public void removeBlob(String fileName) {
+        this.blobMap.remove(fileName);
+    }
+
 
     public String getHashName() {
         return sha1(this.message, dateToTimeStamp(this.timestamp), this.parent);
@@ -105,6 +106,23 @@ public class Commit implements Serializable {
     }
 
 
+    public HashMap<String, String> getBlobMap() {
+        return blobMap;
+    }
 
+    /**
+     * 用于获取HEAD指针指向的Commit对象
+     * @return
+     */
+    public static Commit getHeadCommit(){
+        /* 获取HEAD指针,这个指针指向目前最新的commit */
+        String headHashName = readContentsAsString(HEAD_POINT);
+        File commitFile = join(COMMIT_FOLDER, headHashName);
+        /* 如果在commit中不存在此文件 */
+        Commit commit = readObject(commitFile,Commit.class);
+
+        return commit;
+
+    }
 
 }

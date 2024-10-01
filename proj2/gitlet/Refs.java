@@ -9,6 +9,27 @@ import static gitlet.Utils.*;
  * Represent the reference point of HEAD, REMOTE and so on;
  */
 public class Refs {
+    /* The current working directory. */
+    public static final File CWD = new File(System.getProperty("user.dir"));
+    /* The .gitlet directory. */
+    public static final File GITLET_DIR = join(CWD, ".gitlet");
+
+    /* the objects directory */
+    static final File OBJECTS_FOLDER = join(GITLET_DIR, "objects");
+    static final File COMMIT_FOLDER = join(OBJECTS_FOLDER, "commits");
+    static final File BLOBS_FOLDER = join(OBJECTS_FOLDER, "blobs");
+
+    /* The refs directory. */
+    public static final File REFS_DIR = join(GITLET_DIR, "refs");
+    public static final File HEAD_DIR = join(REFS_DIR, "heads");
+
+    /* the current .gitlet/HEAD file */
+    public static final File HEAD_POINT = join(REFS_DIR, "HEAD");
+
+    /* the stage directory */
+    public static final File ADD_STAGE_DIR = join(GITLET_DIR, "addstage");
+    public static final File REMOVE_STAGE_DIR = join(GITLET_DIR, "removestage");
+
 
 
     /**

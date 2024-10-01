@@ -31,7 +31,11 @@ public class Main {
             case "commit":
                 String commitMsg = args[1];
                 commitFile(commitMsg);
-
+                break;
+            case "rm":
+                String removeFile = args[1];
+                removeStage(removeFile);
+                break;
             // TODO: FILL THE REST IN
         }
     }

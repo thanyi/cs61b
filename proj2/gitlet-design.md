@@ -2,7 +2,7 @@
 
 **Name**: ethanyi9
 
-目前init指令已完成
+目前init、add指令已完成
 
 ## Classes and Data Structures
 
@@ -13,26 +13,30 @@
 #### Instance Variables
 
 - String message: 保存commit提交的评论
-- timestamp: 提交时间，第一个是 Date(0)，根据Date对象进行
-- parent: 这个commit的上一个commit。
-- blobHashName: 将commit的内容进行的hash值，值表示的是内容的hash
+- Date timestamp: 提交时间，第一个是 Date(0)，根据Date对象进行
+- String parent: 这个commit的上一个commit。
+- HashMap<String,String> blobMap: 文件内容的hashMap，key为修改文件的文件名，value是其对应的blob的hash名
 
 #### Methods
-- getUid: 获取commit的sha-1 hash值，包括上面的局部变量
-- saveCommit: 将对象保存进文件中
+- getHashName: 获取commit的sha-1 hash值，包括的内容是message, timestamp, parent
+- saveCommit: 将对象保存进文件中，文件名为commit的hash名
+- addBlob：保存blob键值对，
 
 ### Class 2 Refs
 
-About HEAD structure.
+关于文件指针的类
 #### Instance Variables
 
 - REFS_DIR: ".gitlet/refs"文件夹
 - HEAD_DIR: ".gitlet/refs/heads" 文件夹
 - HEAD_CONTENT_PATH: ".gitlet/HEAD" 文件
 
-#### Methods
-- saveHead: Save HEAD file and branch file which contains the hash of current commit
+...
 
+
+#### Methods
+- saveHead: 保存HEAD指针
+- saveBranch: 保存在refs/heads文件夹中的分支的头指针
 ## Algorithms
 
 ### init
@@ -47,12 +51,30 @@ About HEAD structure.
         |── heads (folder) //指向目前的branch
             |-- master (file)
             |-- other file      //表示其他分支的路径
-    |-- HEAD (file)     // 保存HEAD指针的对应hashname
+        |-- HEAD (file)     // 保存HEAD指针的对应hashname
     |-- addstage (folder)       // 暂存区文件夹
     |-- removestage (folder)
 ```
     
+### add
+将指定的文件放入addstage文件夹中，将文件内容创建为blob文件，以内容的hash值作为文件名保存在objects/blobs文件夹中
+```
+.gitlet (folder)
+    |── objects (folder) 
+        |-- commits
+        |-- blobs
+            |-- <hash>  <----- 加入的file.txt文件内容
+    |── refs (folder)
+        |── heads (folder) 
+            |-- master (file)
+            |-- other file     
+        |-- HEAD (file)     
+    |-- addstage (folder)       
+        |-- file.txt  <----- 保存blob文件的路径
+    |-- removestage (folder)
 
+file.txt  <----- 加入的文件
+```
 
 ## Persistence
 

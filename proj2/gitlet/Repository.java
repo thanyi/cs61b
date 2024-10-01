@@ -5,6 +5,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static gitlet.Commit.*;
 import static gitlet.Refs.*;
 import static gitlet.Utils.*;
 import static java.lang.System.exit;
@@ -30,40 +31,17 @@ public class Repository {
      * the path we created as below:
      * <p>
      * .gitlet (folder)
-     * |── objects (folder) // 存储commit对象文件
-     * |-- commits
-     * |-- blobs
-     * |── refs (folder)
-     * |── heads (folder) //指向目前的branch
-     * |-- master (file)
-     * |-- other file      //表示其他分支的路径
-     * |-- HEAD (file)     // 保存HEAD指针的对应hashname
-     * |-- addstage (folder)       // 暂存区文件夹
-     * |-- removestage (folder)
+     *      |── objects (folder) // 存储commit对象文件
+     *          |-- commits
+     *          |-- blobs
+     *      |── refs (folder)
+     *          |── heads (folder) //指向目前的branch
+     *              |-- master (file)
+     *              |-- other file      //表示其他分支的路径
+     *          |-- HEAD (file)     // 保存HEAD指针的对应hashname
+     *      |-- addstage (folder)       // 暂存区文件夹
+     *      |-- removestage (folder)
      */
-
-    /* The current working directory. */
-    public static final File CWD = new File(System.getProperty("user.dir"));
-    /* The .gitlet directory. */
-    public static final File GITLET_DIR = join(CWD, ".gitlet");
-
-    /* the objects directory */
-    static final File OBJECTS_FOLDER = join(GITLET_DIR, "objects");
-    static final File COMMIT_FOLDER = join(OBJECTS_FOLDER, "commits");
-    static final File BLOBS_FOLDER = join(OBJECTS_FOLDER, "blobs");
-
-    /* The refs directory. */
-    public static final File REFS_DIR = join(GITLET_DIR, "refs");
-    public static final File HEAD_DIR = join(REFS_DIR, "heads");
-
-    /* the current .gitlet/HEAD file */
-    public static final File HEAD_POINT = join(REFS_DIR, "HEAD");
-
-    /* the stage directory */
-    public static final File ADD_STAGE_DIR = join(GITLET_DIR, "addstage");
-    public static final File REMOVE_STAGE_DIR = join(GITLET_DIR, "removestage");
-
-
 
     /* TODO: fill in the rest of this class. */
 
@@ -118,6 +96,8 @@ public class Repository {
         File commitFile = new File(COMMIT_FOLDER, hashname);
         writeObject(commitFile, obj);
     }
+
+    /* ---------------------- 功能函数实现 --------------------- */
 
     /**
      * Creates a new Gitlet version-control system in the current directory. This system will automatically start with one
@@ -203,9 +183,10 @@ public class Repository {
      */
     public static void commitFile(String commitMsg) {
         /* 获取addstage中的filename和hashname */
-        List<String> fileNames = plainFilenamesIn(ADD_STAGE_DIR);
+        List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
+        List<String> removeStageFiles = plainFilenamesIn(REMOVE_STAGE_DIR);
         /* 错误的情况，直接返回 */
-        if(fileNames.isEmpty()){
+        if(addStageFiles.isEmpty() && removeStageFiles.isEmpty()){
             System.out.println("No changes added to the commit.");;
             exit(0);
         }
@@ -216,26 +197,31 @@ public class Repository {
         }
 
 
-        /* 获取HEAD指针,这个指针指向目前最新的commit */
-        String headHashName = readContentsAsString(HEAD_POINT);
-        File commitFile = join(COMMIT_FOLDER, headHashName);
-
         /* 获取最新的commit*/
-        Commit oldCommit = readObject(commitFile,Commit.class);
+        Commit oldCommit = getHeadCommit();
 
         /* 创建新的commit，newCommit根据oldCommit进行调整*/
         Commit newCommit = new Commit(oldCommit);
-        newCommit.setParent(headHashName);  // 指定父节点
+        newCommit.setParent(oldCommit.getHashName());  // 指定父节点
         newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
 
-//        System.out.println("newCommit initialized! ");
-        //todo:需要完成通过stage对commit的add操作
 
-        /* 对每一个addstage中的fileName进行其路径的读取 */
-        for(String stageFileName : fileNames) {
+        /* 对每一个addstage中的fileName进行其路径的读取，保存进commit的blobMap */
+        for(String stageFileName : addStageFiles) {
             String hashName = readContentsAsString(join(ADD_STAGE_DIR, stageFileName));
             newCommit.addBlob(stageFileName, hashName);     // 在newCommit中更新blob
             join(ADD_STAGE_DIR,stageFileName).delete();
+        }
+
+        HashMap<String, String> blobMap = newCommit.getBlobMap();
+
+        /* 对每一个rmstage中的fileName进行其路径的读取，删除commit的blobMap中对应的值 */
+        for(String stageFileName : removeStageFiles) {
+            if (blobMap.containsKey(stageFileName)) {
+                join(BLOBS_FOLDER, blobMap.get(stageFileName)).delete(); // 删除blobs中的文件
+                newCommit.removeBlob(stageFileName);   // 在newCommit中删除removeStage中的blob
+            }
+            join(REMOVE_STAGE_DIR,stageFileName).delete();
         }
 
         newCommit.saveCommit();
@@ -244,6 +230,41 @@ public class Repository {
         saveHEAD(join(COMMIT_FOLDER, newCommit.getHashName()));
         saveBranch("master", newCommit.getHashName());
 
+    }
+
+    /**
+     * Unstage the file if it is currently staged for addition.
+     * If the file is tracked in the current commit, stage it for removal and remove the file from
+     * the working directory if the user has not already done so (do not remove it unless it is tracked in the current commit).
+     * @param removeFileName 指定删除的文件名
+     */
+    public static void removeStage(String removeFileName) {
+        /* 如果文件名是空 */
+        if (removeFileName == null ) {
+            System.out.println("Please enter a file name.");
+            exit(0);
+        }
+
+        /* 如果在暂存目录中不存在此文件,同时在在commit中不存在此文件 */
+        Commit headCommit = getHeadCommit();
+        HashMap<String, String> blobMap = headCommit.getBlobMap();
+        List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
+        if(!addStageFiles.contains(removeFileName) && !blobMap.containsKey(removeFileName) ) {
+            System.out.println("No reason to remove the file.");
+            exit(0);
+        }
+
+        /* 如果addStage中存在，则删除 */
+        File addStageFile = join(ADD_STAGE_DIR, removeFileName);
+        addStageFile.delete();
+
+        /* 添加进removeStage */
+        File remoteFilePoint = new File(REMOVE_STAGE_DIR, removeFileName);
+        writeContents(remoteFilePoint, "");
+
+        /* 删除工作目录下文件 */
+        File fileDeleted = new File(CWD, removeFileName);
+        fileDeleted.delete();
     }
 
 }
