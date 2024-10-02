@@ -106,6 +106,32 @@ public class Repository {
         System.out.print("\n");
     }
 
+    /**
+     * @param field      打印的标题区域
+     * @param files      文件夹中的所有文件
+     * @param branchName 指定的branchName
+     */
+    public static void printStatusPerField(String field, Collection<String> files, String branchName) {
+        System.out.println("=== " + field + " ===");
+        if (field.equals("Branches")) {
+            for (var file : files) {
+                // 如果是head文件
+                if (file.equals(branchName)) {
+                    System.out.println("*" + file);
+                } else {
+                    System.out.println(file);
+                }
+            }
+        } else {
+            for (var file : files) {
+                System.out.println(file);
+            }
+        }
+
+        System.out.print("\n");
+    }
+
+
     /* ---------------------- 功能函数实现 --------------------- */
 
     /**
@@ -133,9 +159,10 @@ public class Repository {
 
         // save the hashname to heads dir
         String commitHashName = initialCommit.getHashName();
-        saveBranch("master", commitHashName);
+        String branchName = "master";
+        saveBranch(branchName, commitHashName);
 
-        // 将此时的HEAD指针指向commit
+        // 将此时的HEAD指针指向commit中的代表head的文件
         saveHEAD(join(COMMIT_FOLDER, commitHashName));
 
     }
@@ -159,14 +186,18 @@ public class Repository {
             exit(0);
         }
         /* 如果在工作目录中不存在此文件 */
-        List<String> fileNames = plainFilenamesIn(CWD);
-        if (!fileNames.contains(addFileName)) {
+//        List<String> fileNames = plainFilenamesIn(CWD);
+//        if (!fileNames.contains(addFileName)) {
+//            System.out.println("File does not exist.");
+//            exit(0);
+//        }
+        File fileAdded = join(CWD, addFileName);
+        if (!fileAdded.exists()) {
             System.out.println("File does not exist.");
             exit(0);
         }
 
         /* 将文件放入暂存区，文件名是内容的hash值，内容是源文件内容 */
-        File fileAdded = join(CWD, addFileName);
         String fileContent = readContentsAsString(fileAdded);
         String blobName = sha1(fileContent);
 
@@ -251,11 +282,12 @@ public class Repository {
      * @param removeFileName 指定删除的文件名
      */
     public static void removeStage(String removeFileName) {
-        /* 如果文件名是空 */
-        if (removeFileName == null) {
+        /* 如果文件名是空或者如果工作区没有这个文件 */
+        if (removeFileName == null || !join(CWD, removeFileName).exists()) {
             System.out.println("Please enter a file name.");
             exit(0);
         }
+
 
         /* 如果在暂存目录中不存在此文件,同时在在commit中不存在此文件 */
         Commit headCommit = getHeadCommit();
@@ -268,7 +300,8 @@ public class Repository {
 
         /* 如果addStage中存在，则删除 */
         File addStageFile = join(ADD_STAGE_DIR, removeFileName);
-        addStageFile.delete();
+        if (addStageFile.exists())
+            addStageFile.delete();
 
         /* 添加进removeStage */
         File remoteFilePoint = new File(REMOVE_STAGE_DIR, removeFileName);
@@ -310,5 +343,116 @@ public class Repository {
         }
     }
 
+    /**
+     * Prints out the ids of all commits that have the given commit message, one per line. If there are multiple such commits, it prints the ids out on separate lines. The commit message is a single operand; to indicate a multiword message, put the operand in quotation marks, as for the commit command below.
+     */
+    public static void findCommit(String commitMsg) {
+        Commit headCommit = getHeadCommit();
+        Commit commit = headCommit;
+        boolean found = false;
+        /* 如果msg相等就break，或者是到达初始提交就退出 */
+        while (!commit.getParent().isEmpty()) {
+
+            if (commit.getMessage().equals(commitMsg)) {
+                found = true;
+                System.out.println("commit " + commit.getHashName());
+            }
+            commit = getCommit(commit.getParent());
+        }
+        /* 检查最后一个提交 */
+        if (commit.getMessage().equals(commitMsg)) {
+            found = true;
+            System.out.println("commit " + commit.getHashName());
+        }
+
+        if (!found) {
+            System.out.println("Found no commit with that message.");
+        }
+
+    }
+
+
+    /**
+     * Displays what branches currently exist, and marks the current branch with a *. Also displays what files have been staged for addition or removal.
+     */
+    public static void showStatus() {
+        /* 获取当前分支名 */
+        Commit headCommit = getHeadCommit();
+        String branchName = headCommit.getBranchName();
+
+        List<String> filesInHead = plainFilenamesIn(HEAD_DIR);
+        List<String> filesInAdd = plainFilenamesIn(ADD_STAGE_DIR);
+        List<String> filesInRm = plainFilenamesIn(REMOVE_STAGE_DIR);
+
+        HashMap<String, String> blobMap = headCommit.getBlobMap();
+        Set<String> trackFiles = blobMap.keySet();  // commit中跟踪着的文件名
+        LinkedList<String> modifiedFilesList = new LinkedList<>();
+        LinkedList<String> untrackFilesList = new LinkedList<>();
+
+        printStatusPerField("Branches", filesInHead, branchName);
+        printStatusPerField("Staged Files", filesInAdd, branchName);
+        printStatusPerField("Removed Files", filesInRm, branchName);
+
+        /* 开始进行：Modifications Not Staged For Commit */
+
+        /* 暂存已经添加，但内容与工作目录中的内容不同 */
+        for (String fileAdd : filesInAdd) {
+            /* 如果文件在暂存区存在，但是在工作区不存在，则直接加入modifiedFilesList */
+            if (!join(CWD, fileAdd).exists()) {
+                modifiedFilesList.add(fileAdd);
+                continue;
+            }
+
+            String workFileContent = readContentsAsString(join(CWD, fileAdd));
+            String addStageBlobName = readContentsAsString(join(ADD_STAGE_DIR, fileAdd));
+            String addStageFileContent = readContentsAsString(join(BLOBS_FOLDER, addStageBlobName));
+
+            if (!workFileContent.equals(addStageFileContent)) {
+                modifiedFilesList.add(fileAdd);       // 当工作区和addStage中文件内容不一致，则进入modifiedFilesList
+            }
+        }
+
+        /* 在当前提交中跟踪，在工作目录中更改，但未暂存 */
+        for (String trackFile : trackFiles) {
+            if (trackFile.isEmpty() || trackFile == null) {
+                continue;
+            }
+            File workFile = join(CWD, trackFile);
+            File fileInRmStage = join(REMOVE_STAGE_DIR, trackFile);
+
+            if (!workFile.exists() && !fileInRmStage.exists()) {      // 当工作区文件直接不存在的情况
+                modifiedFilesList.add(trackFile);       // 在rmStage中无此文件，同时工作区也没有这个文件
+                continue;
+            }
+            if (!filesInAdd.contains(trackFile)) { // 当addStage中没有此文件
+
+                String workFileContent = readContentsAsString(workFile);
+                String blobFileContent = readContentsAsString(join(BLOBS_FOLDER, blobMap.get(trackFile)));
+
+                if (!workFileContent.equals(blobFileContent)) {
+                    modifiedFilesList.add(trackFile);       // 当正在track的文件被修改，但addStage中无此文件，则进入modifiedFilesList
+                }
+
+            }
+        }
+
+        printStatusPerField("Modifications Not Staged For Commit", modifiedFilesList, branchName);
+
+        /* 开始进行：Untracked Files */
+        List<String> workFiles = plainFilenamesIn(CWD);
+        for (String workFile : workFiles) {
+            if (!filesInAdd.contains(workFile) && !filesInRm.contains(workFile) && !trackFiles.contains(workFile)) {
+                untrackFilesList.add(workFile);
+                continue;
+            }
+
+            if (filesInRm.contains(workFile)) {
+                untrackFilesList.add(workFile);
+            }
+        }
+
+        printStatusPerField("Untracked Files", untrackFilesList, branchName);
+
+    }
 
 }

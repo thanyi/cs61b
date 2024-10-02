@@ -48,6 +48,17 @@ public class Main {
                 }
                 printGlobalLog();
                 break;
+            case "find":
+                String findMsg = args[1];
+                findCommit(findMsg);
+                break;
+            case "status":
+                if (args.length != 1){
+                    System.out.println("Incorrect operands.");
+                }
+//                findCommit(findMsg);
+                showStatus();
+                break;
             // TODO: FILL THE REST IN
         }
     }

@@ -2,7 +2,9 @@
 
 **Name**: ethanyi9
 
-目前init、add指令已完成
+目前init、add、rm指令已完成
+
+commit、log、global-log需要修改
 
 ## Classes and Data Structures
 
@@ -37,6 +39,20 @@
 #### Methods
 - saveHead: 保存HEAD指针
 - saveBranch: 保存在refs/heads文件夹中的分支的头指针
+
+### Class 3 Blob
+用于Blob存储相关的类
+#### Instance Variables
+- private String content：   blob中保存的内容
+- public File filePath：     blob文件的自身路径
+- private String hashName： blob文件名，以hash为值
+#### Methods
+
+- void saveBlob()： 将blob对象保存为文件形式
+
+
+
+
 ## Algorithms
 
 ### init
@@ -75,6 +91,10 @@
 
 file.txt  <----- 加入的文件
 ```
+
+### commit
+将addstage和removestage中的文件一个个进行响应操作，addStage中的进行添加，removeStage中的进行删除
+
 
 ## Persistence
 

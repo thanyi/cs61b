@@ -26,6 +26,12 @@ public class Blob implements Serializable {
         writeContents(filePath, this.content);
     }
 
+
+    public boolean compareContents(String content) {
+        if(this.content.equals(content)) return true;
+        else return false;
+    }
+
     public String getContent() {
         return content;
     }

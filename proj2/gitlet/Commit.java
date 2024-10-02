@@ -120,6 +120,10 @@ public class Commit implements Serializable {
         this.message = message;
     }
 
+    public String getBranchName() {
+        return branchName;
+    }
+
     /**
      * 用于获取HEAD指针指向的Commit对象
      *
@@ -129,7 +133,7 @@ public class Commit implements Serializable {
         /* 获取HEAD指针,这个指针指向目前最新的commit */
         String headHashName = readContentsAsString(HEAD_POINT);
         File commitFile = join(COMMIT_FOLDER, headHashName);
-        /* 如果在commit中不存在此文件 */
+        /* 获取commit文件 */
         Commit commit = readObject(commitFile, Commit.class);
 
         return commit;

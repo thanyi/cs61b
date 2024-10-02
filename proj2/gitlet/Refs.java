@@ -46,8 +46,8 @@ public class Refs {
     }
 
     /**
-     * Save the point to HEAD into .gitlet/HEAD folder
-     * @param branch_head File obj of the HEAD point path
+     * Save the point to HEAD into .gitlet/refs/HEAD folder
+     * @param branch_head 关于保存的.gitlet/refs/heads中的File对象
      */
     public static void saveHEAD(File branch_head) {
         String HEAD_content = branch_head.getName();
