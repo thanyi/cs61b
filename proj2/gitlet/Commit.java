@@ -125,7 +125,7 @@ public class Commit implements Serializable {
     }
 
     public void setBranchName(String branchName) {
-        this.branchName =  branchName;
+        this.branchName = branchName;
     }
 
     /**
@@ -151,7 +151,7 @@ public class Commit implements Serializable {
      */
     public static Commit getBranchHeadCommit(String branchName) {
         File brancheFile = join(HEAD_DIR, branchName);
-        if (!brancheFile.exists()){
+        if (!brancheFile.exists()) {
             System.out.println("No such branch exists");
             exit(0);
         }
@@ -185,4 +185,23 @@ public class Commit implements Serializable {
     }
 
 
+    /**
+     * 给定一个commitId，返回一个相对应的commit对象，若是没有这个commit对象，则返回null
+     *
+     * @param commitId
+     * @return commit或者null
+     */
+    public static Commit getCommitFromId(String commitId) {
+        Commit headCommit = getHeadCommit();
+        Commit commit = headCommit;
+        /* 查找对应的commit */
+        while (!commit.getHashName().equals(commitId)) {
+            commit = getCommit(commit.getParent());
+            if (commit.getParent().isEmpty()) {
+                return null;
+            }
+        }
+
+        return commit;
+    }
 }

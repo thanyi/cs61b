@@ -2,23 +2,26 @@ package gitlet;
 
 import static gitlet.Repository.*;
 
-/** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+/**
+ * Driver class for Gitlet, a subset of the Git version-control system.
+ *
+ * @author TODO
  */
 public class Main {
 
-    /** Usage: java gitlet.Main ARGS, where ARGS contains
-     *  <COMMAND> <OPERAND1> <OPERAND2> ... 
+    /**
+     * Usage: java gitlet.Main ARGS, where ARGS contains
+     * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
     public static void main(String[] args) {
         // check if args is empty.
         checkArgsEmpty(args);
         String firstArg = args[0];
 
-        switch(firstArg) {
+        switch (firstArg) {
             case "init":
                 //
-                if (args.length != 1){
+                if (args.length != 1) {
                     System.out.println("Incorrect operands.");
                 }
                 initPersistence();
@@ -37,13 +40,13 @@ public class Main {
                 removeStage(removeFile);
                 break;
             case "log":
-                if (args.length != 1){
+                if (args.length != 1) {
                     System.out.println("Incorrect operands.");
                 }
                 printLog();
                 break;
             case "global-log":
-                if (args.length != 1){
+                if (args.length != 1) {
                     System.out.println("Incorrect operands.");
                 }
                 printGlobalLog();
@@ -53,7 +56,7 @@ public class Main {
                 findCommit(findMsg);
                 break;
             case "status":
-                if (args.length != 1){
+                if (args.length != 1) {
                     System.out.println("Incorrect operands.");
                 }
 //                findCommit(findMsg);
@@ -61,10 +64,25 @@ public class Main {
                 break;
 
             case "checkout":
-                if (args.length == 1){
+                if (args.length == 1) {
                     System.out.println("Incorrect operands.");
                 }
                 checkOut(args);
+                break;
+
+            case "rm-branch":
+                //  java gitlet.Main rm-branch [branch name]
+                if (args.length != 2) {
+                    System.out.println("Incorrect operands.");
+                }
+                removeBranch(args[1]);
+                break;
+            case "reset":
+                //  java gitlet.Main reset [commit id]
+                if (args.length != 2) {
+                    System.out.println("Incorrect operands.");
+                }
+                reset(args[1]);
                 break;
             // TODO: FILL THE REST IN
         }

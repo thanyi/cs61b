@@ -570,14 +570,22 @@ public class Repository {
 
             /* todo:是否可以进行对objects文件夹的重构，实现hashMap结构
                 使得时间效率上不是线性, 而不是依靠链表查找 */
-            while(!commit.getHashName().equals(commitId)){
-                commit = getCommit(commit.getParent());
-                // 如果找不到commitId对应的commit
-                if (commit.getParent().isEmpty()){
-                    System.out.println("No commit with that id exists.");
-                    exit(0);
-                }
+            if (getCommitFromId(commitId) == null){
+                System.out.println("No commit with that id exists.");
+                exit(0);
+            }else {
+                commit = getCommitFromId(commitId);
             }
+
+
+//            while(!commit.getHashName().equals(commitId)){
+//                commit = getCommit(commit.getParent());
+//                // 如果找不到commitId对应的commit
+//                if (commit.getParent().isEmpty()){
+//                    System.out.println("No commit with that id exists.");
+//                    exit(0);
+//                }
+//            }
             if(!commit.getBlobMap().containsKey(fileName) ){
                 System.out.println("File does not exist in that commit.");
                 exit(0);
@@ -622,5 +630,80 @@ public class Repository {
         Commit headCommit = getHeadCommit();
         saveBranch(branchName, headCommit.getHashName());
     }
+
+
+    /**
+     * Deletes the branch with the given name.
+     * This only means to delete the pointer associated with the branch;
+     * it does not mean to delete all commits that were created under the branch, or anything like that.
+     */
+    public static void removeBranch(String branchName){
+        /* 检测是否有相关Branch */
+        File brancheFile = join(HEAD_DIR, branchName);
+        if(!brancheFile.exists()){
+            System.out.println("A branch with that name does not exist.");
+            exit(0);
+        }
+        /* 检测Branch是否为curr branch */
+        Commit headCommit = getHeadCommit();
+        if(headCommit.getBranchName().equals(branchName)){
+            System.out.println("Cannot remove the current branch.");
+            exit(0);
+        }
+        /* 删除这个branch的指针文件 */
+        File branchHeadPoint = join(HEAD_DIR, branchName);
+        restrictedDelete(branchHeadPoint);
+    }
+
+    /**
+     * Checks out all the files tracked by the given commit.
+     * Removes tracked files that are not present in that commit.
+     * Also moves the current branch’s head to that commit node.
+     * See the intro for an example of what happens to the head pointer after using reset.
+     * The [commit id] may be abbreviated as for checkout.
+     * The staging area is cleared. The command is essentially checkout of an arbitrary commit that also changes the current branch head.
+     *
+     * @apiNote java gitlet.Main reset [commit id]      将文件内容全部转化为[commit id]中的文件
+     */
+    public static void reset(String commitId){
+
+        if(getCommitFromId(commitId) == null){
+            System.out.println("No commit with that id exists.");
+            exit(0);
+        }
+        Commit headCommit = getHeadCommit();
+        Commit commit = getCommitFromId(commitId);
+        Set<String> fileNameSet = commit.getBlobMap().keySet();
+        Set<String> currTrackSet = headCommit.getBlobMap().keySet();
+        HashMap<String, String> commitBlobMap = commit.getBlobMap();
+
+        /* 先检测CWD中是否存在未被current branch跟踪的文件 */
+        List<String> workFileNames = plainFilenamesIn(CWD);
+        for(String workFile : workFileNames){
+            if (!currTrackSet.contains(workFile)){
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                exit(0);
+            }
+        }
+
+        /* 检测完后清空CWD文件夹 */
+        for(String workFile : workFileNames){
+            restrictedDelete(join(CWD,workFile));
+        }
+
+        /* 将fileNameSet中每一个跟踪的文件重写入工作文件夹中 */
+        for(var trackedfileName : fileNameSet){
+            // 每一个trackedfileName是一个commit中跟踪的fileName
+            File workFile = join(CWD, trackedfileName);
+            String blobHash = commitBlobMap.get(trackedfileName);   // 文件对应的blobName
+            String blobFromNameContent = getBlobContentFromName(blobHash);
+            writeContents(workFile,blobFromNameContent);
+        }
+
+        /* 将目前给定的HEAD指针指向这个commit */
+        writeContents(HEAD_POINT, commitId);
+    }
+
+
 
 }
