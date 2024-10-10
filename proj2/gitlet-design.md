@@ -96,5 +96,11 @@ file.txt  <----- 加入的文件
 将addstage和removestage中的文件一个个进行响应操作，addStage中的进行添加，removeStage中的进行删除
 
 
+### rm
+
+
+
+
+
 ## Persistence
 

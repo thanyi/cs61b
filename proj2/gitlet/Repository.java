@@ -83,19 +83,19 @@ public class Repository {
     }
 
 
-    /**
-     * To save some Commit objects into files .
-     *
-     * @apiNote 暂时没有用到
-     */
-    public void saveObject2File(File path, Commit obj) {
-        // get the uid of this
-        String hashname = obj.getHashName();
-
-        // write obj to files
-        File commitFile = new File(COMMIT_FOLDER, hashname);
-        writeObject(commitFile, obj);
-    }
+//    /**
+//     * To save some Commit objects into files .
+//     *
+//     * @apiNote 暂时没有用到
+//     */
+//    public void saveObject2File(File path, Commit obj) {
+//        // get the uid of this
+//        String hashname = obj.getHashName();
+//
+//        // write obj to files
+//        File commitFile = new File(COMMIT_FOLDER, hashname);
+//        writeObject(commitFile, obj);
+//    }
 
 
     public static void printCommitLog(Commit commit) {
@@ -453,6 +453,24 @@ public class Repository {
 
         printStatusPerField("Untracked Files", untrackFilesList, branchName);
 
+    }
+
+
+
+
+    public static void checkOut(String[] args){
+
+        if(args.length == 2){
+            //  git checkout [branchName]
+
+        } else if (args.length == 4) {
+            //  git checkout [commit id] -- [file name]
+
+        } else if (args.length == 3) {
+            //  git checkout -- [file name]
+
+
+        }
     }
 
 }

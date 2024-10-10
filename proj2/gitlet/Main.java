@@ -59,6 +59,9 @@ public class Main {
 //                findCommit(findMsg);
                 showStatus();
                 break;
+
+            case "checkout":
+
             // TODO: FILL THE REST IN
         }
     }
