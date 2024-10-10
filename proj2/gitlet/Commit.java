@@ -124,6 +124,10 @@ public class Commit implements Serializable {
         return branchName;
     }
 
+    public void setBranchName(String branchName) {
+        this.branchName =  branchName;
+    }
+
     /**
      * 用于获取HEAD指针指向的Commit对象
      *
@@ -140,6 +144,27 @@ public class Commit implements Serializable {
 
     }
 
+    /**
+     * 用于获取branches文件夹中分支文件指向的Commit对象
+     *
+     * @return
+     */
+    public static Commit getBranchHeadCommit(String branchName) {
+        File brancheFile = join(HEAD_DIR, branchName);
+        if (!brancheFile.exists()){
+            System.out.println("No such branch exists");
+            exit(0);
+        }
+
+        /* 获取HEAD指针,这个指针指向目前最新的commit */
+        String headHashName = readContentsAsString(brancheFile);
+        File commitFile = join(COMMIT_FOLDER, headHashName);
+        /* 获取commit文件 */
+        Commit commit = readObject(commitFile, Commit.class);
+
+        return commit;
+
+    }
 
     /**
      * 通过hashname来获取Commit对象

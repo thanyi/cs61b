@@ -33,10 +33,11 @@ public class Refs {
 
 
     /**
-     * Save HEAD file and <branch> file which contains the hash of current commit
+     * 创建一个文件：路径是join(HEAD_DIR, branchName)
+     * 向其中写入hashName
      *
-     * @param branchName: the name of current branch
-     * @param hashName:   the uid of current commit
+     * @param branchName: 此branch的名字
+     * @param hashName:   写入branch的内容
      */
     public static void saveBranch(String branchName, String hashName) {
         // save the file of the head of a given branch
@@ -46,8 +47,9 @@ public class Refs {
     }
 
     /**
+     * 在HEAD文件中写入当前branch的hash值
      * Save the point to HEAD into .gitlet/refs/HEAD folder
-     * @param branch_head 关于保存的.gitlet/refs/heads中的File对象
+     * @param branch_head 关于保存在.gitlet/refs/heads中对应分支文件的File对象
      */
     public static void saveHEAD(File branch_head) {
         String HEAD_content = branch_head.getName();

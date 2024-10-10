@@ -61,7 +61,11 @@ public class Main {
                 break;
 
             case "checkout":
-
+                if (args.length == 1){
+                    System.out.println("Incorrect operands.");
+                }
+                checkOut(args);
+                break;
             // TODO: FILL THE REST IN
         }
     }

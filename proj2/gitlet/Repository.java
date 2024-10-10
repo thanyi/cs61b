@@ -8,6 +8,7 @@ import java.util.*;
 import static gitlet.Commit.*;
 import static gitlet.Refs.*;
 import static gitlet.Utils.*;
+import static gitlet.Blob.*;
 import static java.lang.System.exit;
 
 // TODO: any imports you need here
@@ -192,10 +193,38 @@ public class Repository {
 //            exit(0);
 //        }
         File fileAdded = join(CWD, addFileName);
+
+        String fileAddedContent = readContentsAsString(fileAdded);
         if (!fileAdded.exists()) {
             System.out.println("File does not exist.");
             exit(0);
         }
+
+        Commit headCommit = getHeadCommit();
+        HashMap<String, String> headCommitBlobMap = headCommit.getBlobMap();
+        /* 如果这个文件是已经被track中的 */
+        if( headCommitBlobMap.containsKey(addFileName) ){
+            String fileAddedInHash = headCommit.getBlobMap().get(addFileName);
+            String commitContent = getBlobContentFromName(fileAddedInHash);
+
+            /* 如果暂存内容和想要添加内容一致，则不将其纳入暂存区，同时将其从暂存区删除（如果存在）,同时将其从removal区移除 */
+            if(commitContent.equals(fileAddedContent)){
+                List<String> filesAdd = plainFilenamesIn(ADD_STAGE_DIR);
+                List<String> filesRm = plainFilenamesIn(REMOVE_STAGE_DIR);
+                /* 如果在暂存区存在,从暂存区删除 */
+                if (filesAdd.contains(addFileName)){
+                    join(ADD_STAGE_DIR,addFileName).delete();
+                }
+                /* 如果在removal area存在,从中删除 */
+                if (filesRm.contains(addFileName)){
+                    join(REMOVE_STAGE_DIR,addFileName).delete();
+                }
+
+                return; //直接退出
+            }
+
+        }
+
 
         /* 将文件放入暂存区，文件名是内容的hash值，内容是源文件内容 */
         String fileContent = readContentsAsString(fileAdded);
@@ -246,6 +275,7 @@ public class Repository {
         newCommit.setParent(oldCommit.getHashName());  // 指定父节点
         newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
         newCommit.setMessage(commitMsg); // 修改新一次的commit的时间戳为目前时间
+        newCommit.setBranchName(oldCommit.getBranchName()); // 在log或者status中需要展示本次commit的分支
 
 
         /* 对每一个addstage中的fileName进行其路径的读取，保存进commit的blobMap */
@@ -293,9 +323,13 @@ public class Repository {
         Commit headCommit = getHeadCommit();
         HashMap<String, String> blobMap = headCommit.getBlobMap();
         List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
-        if (!addStageFiles.contains(removeFileName) && !blobMap.containsKey(removeFileName)) {
-            System.out.println("No reason to remove the file.");
-            exit(0);
+
+        if(!blobMap.containsKey(removeFileName)){
+            if (!addStageFiles.contains(removeFileName) ) {
+                System.out.println("No reason to remove the file.");
+                exit(0);
+            }
+
         }
 
         /* 如果addStage中存在，则删除 */
@@ -303,13 +337,19 @@ public class Repository {
         if (addStageFile.exists())
             addStageFile.delete();
 
-        /* 添加进removeStage */
-        File remoteFilePoint = new File(REMOVE_STAGE_DIR, removeFileName);
-        writeContents(remoteFilePoint, "");
+        /* 当此文件正被track中 */
+        if(blobMap.containsKey(removeFileName)){
+            /* 添加进removeStage */
+            File remoteFilePoint = new File(REMOVE_STAGE_DIR, removeFileName);
+            writeContents(remoteFilePoint, "");
 
-        /* 删除工作目录下文件 */
-        File fileDeleted = new File(CWD, removeFileName);
-        fileDeleted.delete();
+            /* 删除工作目录下文件,注意仅在这个文件被track的时候进行删除 */
+            File fileDeleted = new File(CWD, removeFileName);
+            restrictedDelete(fileDeleted);
+        }
+
+
+
     }
 
     /**
@@ -385,7 +425,7 @@ public class Repository {
         List<String> filesInRm = plainFilenamesIn(REMOVE_STAGE_DIR);
 
         HashMap<String, String> blobMap = headCommit.getBlobMap();
-        Set<String> trackFiles = blobMap.keySet();  // commit中跟踪着的文件名
+        Set<String> trackFileSet = blobMap.keySet();  // commit中跟踪着的文件名
         LinkedList<String> modifiedFilesList = new LinkedList<>();
         LinkedList<String> untrackFilesList = new LinkedList<>();
 
@@ -412,16 +452,18 @@ public class Repository {
             }
         }
 
-        /* 在当前提交中跟踪，在工作目录中更改，但未暂存 */
-        for (String trackFile : trackFiles) {
+        /* 在当前commit中跟踪，在工作目录中更改，但未暂存 */
+        for (String trackFile : trackFileSet) {
             if (trackFile.isEmpty() || trackFile == null) {
                 continue;
             }
             File workFile = join(CWD, trackFile);
             File fileInRmStage = join(REMOVE_STAGE_DIR, trackFile);
 
-            if (!workFile.exists() && !fileInRmStage.exists()) {      // 当工作区文件直接不存在的情况
-                modifiedFilesList.add(trackFile);       // 在rmStage中无此文件，同时工作区也没有这个文件
+            if (!workFile.exists() ) {      // 当工作区文件直接不存在的情况
+                if(!fileInRmStage.exists()){
+                    modifiedFilesList.add(trackFile);       // 在rmStage中无此文件，同时工作区也没有这个文件
+                }
                 continue;
             }
             if (!filesInAdd.contains(trackFile)) { // 当addStage中没有此文件
@@ -441,7 +483,7 @@ public class Repository {
         /* 开始进行：Untracked Files */
         List<String> workFiles = plainFilenamesIn(CWD);
         for (String workFile : workFiles) {
-            if (!filesInAdd.contains(workFile) && !filesInRm.contains(workFile) && !trackFiles.contains(workFile)) {
+            if (!filesInAdd.contains(workFile) && !filesInRm.contains(workFile) && !trackFileSet.contains(workFile)) {
                 untrackFilesList.add(workFile);
                 continue;
             }
@@ -456,21 +498,129 @@ public class Repository {
     }
 
 
-
-
+    /**
+     * 1.   Takes the version of the file as it exists in the head commit and puts it in the working directory,
+     *      overwriting the version of the file that’s already there if there is one.
+     *      The new version of the file is not staged.
+     *
+     * 2.   Takes the version of the file as it exists in the commit with the given id,
+     *      and puts it in the working directory, overwriting the version of the file
+     *      that’s already there if there is one. The new version of the file is not staged.
+     *
+     *
+     * 3.   Takes all files in the commit at the head of the given branch, and puts them in the working directory,
+     *      overwriting the versions of the files that are already there if they exist.
+     *      Also, at the end of this command, the given branch will now be considered the current branch (HEAD).
+     *      Any files that are tracked in the current branch but are not present in the checked-out branch are deleted.
+     *      The staging area is cleared, unless the checked-out branch is the current branch (see Failure cases below).
+     * @param args
+     */
     public static void checkOut(String[] args){
-
+        String fileName ;
         if(args.length == 2){
-            //  git checkout [branchName]
+            //  git checkout branchName
+            /* 如果checkout的分支就是原分支 */
+            String branchName = args[1];
+            Commit headCommit = getHeadCommit();
+            Set<String> currTrackSet = headCommit.getBlobMap().keySet();
+            if (branchName.equals(headCommit.getBranchName())){
+                System.out.println("No need to checkout the current branch.");
+                exit(0);
+            }
+
+            Commit branchHeadCommit = getBranchHeadCommit(branchName);  // 获取branchName的head对应的commit
+            HashMap<String, String> branchHeadBlobMap = branchHeadCommit.getBlobMap();
+            Set<String> fileNameSet = branchHeadBlobMap.keySet();
+
+            /* 先检测CWD中是否存在未被current branch跟踪的文件 */
+            List<String> workFileNames = plainFilenamesIn(CWD);
+            for(String workFile : workFileNames){
+                if (!currTrackSet.contains(workFile)){
+                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    exit(0);
+                }
+            }
+
+            /* 检测完后清空CWD文件夹 */
+            for(String workFile : workFileNames){
+                restrictedDelete(join(CWD,workFile));
+            }
+
+            /* 将fileNameSet中每一个跟踪的文件重写入工作文件夹中 */
+            for(var trackedfileName : fileNameSet){
+                // 每一个trackedfileName是一个commit中跟踪的fileName
+                File workFile = join(CWD, trackedfileName);
+                String blobHash = branchHeadBlobMap.get(trackedfileName);   // 文件对应的blobName
+                String blobFromNameContent = getBlobContentFromName(blobHash);
+                writeContents(workFile,blobFromNameContent);
+            }
+
+            /* 将目前给定的分支视作当前分支 */
+            branchHeadCommit.setBranchName(branchName);
+            saveBranch(branchName,branchHeadCommit.getHashName());
+            saveHEAD(join(HEAD_DIR,branchName));
 
         } else if (args.length == 4) {
             //  git checkout [commit id] -- [file name]
 
+            /* 获取到Blob对象 */
+            fileName = args[3];
+            String commitId = args[1];
+            Commit commit = getHeadCommit();
+
+            /* todo:是否可以进行对objects文件夹的重构，实现hashMap结构
+                使得时间效率上不是线性, 而不是依靠链表查找 */
+            while(!commit.getHashName().equals(commitId)){
+                commit = getCommit(commit.getParent());
+                // 如果找不到commitId对应的commit
+                if (commit.getParent().isEmpty()){
+                    System.out.println("No commit with that id exists.");
+                    exit(0);
+                }
+            }
+            if(!commit.getBlobMap().containsKey(fileName) ){
+                System.out.println("File does not exist in that commit.");
+                exit(0);
+            }
+            String blobName = commit.getBlobMap().get(fileName);
+            String targetBlobContent = getBlobContentFromName(blobName);
+
+            /* 将Blob对象中的内容覆盖working directory中的内容 */
+            File fileInWorkDir = join(CWD, fileName);
+            overWriteFileWithBlob(fileInWorkDir,targetBlobContent);
+
+
+
         } else if (args.length == 3) {
             //  git checkout -- [file name]
 
+            /* 获取到Blob对象中的内容 */
+            fileName = args[2];
+            Commit headCommit = getHeadCommit();
+            if(!headCommit.getBlobMap().containsKey(fileName) ){
+                System.out.println("File does not exist in that commit.");
+                exit(0);
+            }
+            String blobName = headCommit.getBlobMap().get(fileName);
+            String targetBlobContent = getBlobContentFromName(blobName);
+
+            /* 将Blob对象中的内容覆盖working directory中的内容 */
+            File fileInWorkDir = join(CWD, fileName);
+            overWriteFileWithBlob(fileInWorkDir,targetBlobContent);
 
         }
+    }
+
+
+    /**
+     * Creates a new branch with the given name, and points it at the current head commit.
+     * A branch is nothing more than a name for a reference (a SHA-1 identifier) to a commit node.
+     * This command does NOT immediately switch to the newly created branch (just as in real Git).
+     * Before you ever call branch, your code should be running with a default branch called “master”.
+     */
+    public static void createBranch(String branchName){
+        Commit headCommit = getHeadCommit();
+        saveBranch(branchName, headCommit.getHashName());
     }
 
 }
