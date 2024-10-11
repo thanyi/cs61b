@@ -149,10 +149,10 @@ public class Commit implements Serializable {
      *
      * @return
      */
-    public static Commit getBranchHeadCommit(String branchName) {
+    public static Commit getBranchHeadCommit(String branchName,String error_msg) {
         File brancheFile = join(HEAD_DIR, branchName);
         if (!brancheFile.exists()) {
-            System.out.println("No such branch exists");
+            System.out.println(error_msg);
             exit(0);
         }
 
@@ -197,7 +197,7 @@ public class Commit implements Serializable {
         /* 查找对应的commit */
         while (!commit.getHashName().equals(commitId)) {
             commit = getCommit(commit.getParent());
-            if (commit.getParent().isEmpty()) {
+            if (commit.getParent().isEmpty() && !commit.getHashName().equals(commitId)) {
                 return null;
             }
         }

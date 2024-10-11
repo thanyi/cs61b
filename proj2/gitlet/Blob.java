@@ -22,8 +22,11 @@ public class Blob implements Serializable {
      * To save commit into files in BLOB_FOLDER, persists the status of object.
      */
     public void saveBlob() {
-        // write contents to files
-        writeContents(filePath, this.content);
+        if(!filePath.exists()){
+            // 如果这个blob原先不存在，则进行blob的储存
+            writeContents(filePath, this.content);
+        }
+
     }
 
 
