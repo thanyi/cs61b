@@ -39,7 +39,7 @@ public class Commit implements Serializable {
     /* the contents of commit files*/
 //    private String blobNames;
     private HashMap<String, String> blobMap = new HashMap<>();
-    private String branchName = "master";
+//    private String branchName = "master";
 
     public Commit(String message, Date timestamp, String directparent, String blobFileName, String blobHashName) {
         this.message = message;
@@ -121,13 +121,13 @@ public class Commit implements Serializable {
         this.message = message;
     }
 
-    public String getBranchName() {
-        return branchName;
-    }
-
-    public void setBranchName(String branchName) {
-        this.branchName = branchName;
-    }
+//    public String getBranchName() {
+//        return branchName;
+//    }
+//
+//    public void setBranchName(String branchName) {
+//        this.branchName = branchName;
+//    }
 
     public String getOtherParent() {
         return otherParent;
@@ -145,7 +145,8 @@ public class Commit implements Serializable {
      */
     public static Commit getHeadCommit() {
         /* 获取HEAD指针,这个指针指向目前最新的commit */
-        String headHashName = readContentsAsString(HEAD_POINT);
+        String headContent = readContentsAsString(HEAD_POINT);
+        String headHashName = headContent.split(":")[1];
         File commitFile = join(COMMIT_FOLDER, headHashName);
         /* 获取commit文件 */
         Commit commit = readObject(commitFile, Commit.class);
@@ -186,8 +187,9 @@ public class Commit implements Serializable {
         List<String> commitFiles = plainFilenamesIn(COMMIT_FOLDER);
         /* 如果在commit文件夹中不存在此文件 */
         if (!commitFiles.contains(hashName)) {
-            System.out.println("No such file or directory in COMMIT_FOLDER：" + hashName.toString());
-            exit(0);
+//            System.out.println("No such file or directory in COMMIT_FOLDER：" + hashName.toString());
+//            exit(0);
+            return null;
         }
         File commitFile = join(COMMIT_FOLDER, hashName);
         Commit commit = readObject(commitFile, Commit.class);
@@ -203,17 +205,42 @@ public class Commit implements Serializable {
      */
     public static Commit getCommitFromId(String commitId) {
         Commit headCommit = getHeadCommit();
-        Commit commit = headCommit;
+        Commit commit = null;
         /* 查找对应的commit */
-        while (!commit.getHashName().equals(commitId)) {
-            commit = getCommit(commit.getDirectParent());
-            if (commit.getDirectParent().isEmpty() && !commit.getHashName().equals(commitId)) {
-                return null;
-            }
+
+        /*  直接从commit文件夹中依次寻找 */
+        List<String> commitFiles = plainFilenamesIn(COMMIT_FOLDER);
+        if (!commitFiles.contains(commitId)) {
+            return null;
+        }else {
+            File commitFile = join(COMMIT_FOLDER, commitId);
+            commit = readObject(commitFile, Commit.class);
         }
 
         return commit;
     }
 
+
+    public static Commit getSplitCommit(Commit commitA, Commit commitB) {
+
+        Commit p1 = commitA, p2 = commitB;
+        while (!p1.getHashName().equals(p2.getHashName()) ) {
+            // p1 走一步，如果走到 A 链表末尾，转到 B 链表
+            if (p1 == null)
+                p1 = commitB;
+            else{
+                p1 = getCommit(p1.getDirectParent());
+            }
+            // p2 走一步，如果走到 B 链表末尾，转到 A 链表
+            if (p2 == null)
+                p2 = commitA;
+            else{
+                p2 = getCommit(p2.getDirectParent());
+            }
+
+        }
+        return p1;
+
+    }
 
 }

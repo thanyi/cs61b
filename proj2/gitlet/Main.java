@@ -2,6 +2,7 @@ package gitlet;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.message;
+import static java.lang.System.exit;
 
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
@@ -23,7 +24,8 @@ public class Main {
             case "init":
                 //
                 if (args.length != 1) {
-                    System.out.println("Incorrect operands.");
+                    message("Incorrect operands.");
+                    exit(0);
                 }
                 initPersistence();
                 break;
@@ -42,13 +44,15 @@ public class Main {
                 break;
             case "log":
                 if (args.length != 1) {
-                    System.out.println("Incorrect operands.");
+                    message("Incorrect operands.");
+                    exit(0);
                 }
                 printLog();
                 break;
             case "global-log":
                 if (args.length != 1) {
-                    System.out.println("Incorrect operands.");
+                    message("Incorrect operands.");
+                    exit(0);
                 }
                 printGlobalLog();
                 break;
@@ -58,7 +62,8 @@ public class Main {
                 break;
             case "status":
                 if (args.length != 1) {
-                    System.out.println("Incorrect operands.");
+                    message("Incorrect operands.");
+                    exit(0);
                 }
 //                findCommit(findMsg);
                 showStatus();
@@ -66,13 +71,15 @@ public class Main {
 
             case "checkout":
                 if (args.length == 1) {
-                    System.out.println("Incorrect operands.");
+                    message("Incorrect operands.");
+                    exit(0);
                 }
                 checkOut(args);
                 break;
             case "branch":
                 if (args.length != 2) {
                     message("Incorrect operands.");
+                    exit(0);
                 }
                 createBranch(args[1]);
                 break;
@@ -80,15 +87,25 @@ public class Main {
                 //  java gitlet.Main rm-branch [branch name]
                 if (args.length != 2) {
                     message("Incorrect operands.");
+                    exit(0);
                 }
                 removeBranch(args[1]);
                 break;
             case "reset":
                 //  java gitlet.Main reset [commit id]
                 if (args.length != 2) {
-                    System.out.println("Incorrect operands.");
+                    message("Incorrect operands.");
+                    exit(0);
                 }
                 reset(args[1]);
+                break;
+
+            case "merge":
+                if(args.length != 2){
+                    message("Incorrect operands.");
+                    exit(0);
+                }
+                mergeBranch(args[1]);
                 break;
             // TODO: FILL THE REST IN
         }

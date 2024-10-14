@@ -25,8 +25,9 @@ TESTS = samples/*.in student_tests/*.in *.in
 
 # First, and therefore default, target.
 default:
-	$(RMAKE) -C .. 
-	$(RMAKE) PYTHON=$(PYTHON) check
+	$(RMAKE) -C .. default
+	#$(RMAKE) PYTHON=$(PYTHON) check
+
 
 check:
 	@echo "Testing application gitlet.Main..."

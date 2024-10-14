@@ -179,7 +179,7 @@ public class Repository {
         saveBranch(branchName, commitHashName);
 
         // 将此时的HEAD指针指向commit中的代表head的文件
-        saveHEAD(commitHashName);
+        saveHEAD("master",commitHashName);
 
     }
 
@@ -284,7 +284,7 @@ public class Repository {
         newCommit.setDirectParent(oldCommit.getHashName());  // 指定父节点
         newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
         newCommit.setMessage(commitMsg); // 修改新一次的commit的时间戳为目前时间
-        newCommit.setBranchName(oldCommit.getBranchName()); // 在log或者status中需要展示本次commit的分支
+//        newCommit.setBranchName(oldCommit.getBranchName()); // 在log或者status中需要展示本次commit的分支
 
 
         /* 对每一个addstage中的fileName进行其路径的读取，保存进commit的blobMap */
@@ -307,9 +307,9 @@ public class Repository {
 
         newCommit.saveCommit();
 
-        /* 更新HEAD指针和master指针 */
-        saveHEAD(newCommit.getHashName());
-        saveBranch("master", newCommit.getHashName());
+        /* 更新HEAD指针和当前branch head指针 */
+        saveHEAD(getHeadBranchName(), newCommit.getHashName());
+        saveBranch(getHeadBranchName(), newCommit.getHashName());
 
     }
 
@@ -318,7 +318,7 @@ public class Repository {
      * @param commitMsg
      * @param branchName
      */
-    public static void commitFile(String commitMsg, String branchName){
+    public static void commitFileForMerge(String commitMsg, String branchName){
 
 
         /* 获取addstage中的filename和hashname */
@@ -344,7 +344,6 @@ public class Repository {
         newCommit.setDirectParent(oldCommit.getHashName());  // 指定父节点
         newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
         newCommit.setMessage(commitMsg); // 修改新一次的commit的时间戳为目前时间
-        newCommit.setBranchName(oldCommit.getBranchName()); // 在log或者status中需要展示本次commit的分支
         newCommit.setOtherParent(branchHeadCommit.getHashName());   // 指定另一个父节点
 
         /* 对每一个addstage中的fileName进行其路径的读取，保存进commit的blobMap */
@@ -368,8 +367,8 @@ public class Repository {
         newCommit.saveCommit();
 
         /* 更新HEAD指针和master指针 */
-        saveHEAD(newCommit.getHashName());
-        saveBranch("master", newCommit.getHashName());
+        saveHEAD(getHeadBranchName(), newCommit.getHashName());
+        saveBranch(getHeadBranchName(), newCommit.getHashName());
     }
 
     /**
@@ -385,7 +384,7 @@ public class Repository {
             System.out.println("Please enter a file name.");
             exit(0);
         }
-//        !join(CWD, removeFileName).exists()
+
         /* 如果在暂存目录中不存在此文件,同时在在commit中不存在此文件 */
         Commit headCommit = getHeadCommit();
         HashMap<String, String> blobMap = headCommit.getBlobMap();
@@ -495,7 +494,7 @@ public class Repository {
     public static void showStatus() {
         /* 获取当前分支名 */
         Commit headCommit = getHeadCommit();
-        String branchName = headCommit.getBranchName();
+        String branchName = getHeadBranchName();
 
         List<String> filesInHead = plainFilenamesIn(HEAD_DIR);
         List<String> filesInAdd = plainFilenamesIn(ADD_STAGE_DIR);
@@ -600,7 +599,7 @@ public class Repository {
             String branchName = args[1];
             Commit headCommit = getHeadCommit();
 
-            if (branchName.equals(headCommit.getBranchName())){
+            if (branchName.equals(getHeadBranchName())){
                 System.out.println("No need to checkout the current branch.");
                 exit(0);
             }
@@ -631,9 +630,10 @@ public class Repository {
             }
 
             /* 将目前给定的分支视作当前分支 */
-            branchHeadCommit.setBranchName(branchName);
-            saveBranch(branchName,branchHeadCommit.getHashName());
-            saveHEAD(branchHeadCommit.getHashName());
+//            branchHeadCommit.setBranchName(branchName);
+//            saveBranch(branchName,branchHeadCommit.getHashName());
+            saveHEAD(branchName,branchHeadCommit.getHashName());
+//            System.out.println("branchHeadCommit.getHashName()："+branchHeadCommit.getHashName());
 
         } else if (args.length == 4) {
             //  git checkout [commit id] -- [file name]
@@ -695,13 +695,13 @@ public class Repository {
      */
     public static void createBranch(String branchName){
         Commit headCommit = getHeadCommit();
-        saveBranch(branchName, headCommit.getHashName());
-        Commit commit = headCommit;
-        /* 将此split point之前的所有commit的branch设置为"common" */
-        while (!headCommit.getDirectParent().isEmpty()) {
-            commit.setBranchName("common");
-            commit = getCommit(commit.getDirectParent());
+        List<String> fileNameinHeadDir = plainFilenamesIn(HEAD_DIR);
+        if(fileNameinHeadDir.contains(branchName)){
+            message("A branch with that name already exists.");
+            exit(0);
         }
+
+        saveBranch(branchName, headCommit.getHashName());
 
     }
 
@@ -720,13 +720,13 @@ public class Repository {
         }
         /* 检测Branch是否为curr branch */
         Commit headCommit = getHeadCommit();
-        if(headCommit.getBranchName().equals(branchName)){
+        if(getHeadBranchName().equals(branchName)){
             System.out.println("Cannot remove the current branch.");
             exit(0);
         }
         /* 删除这个branch的指针文件 */
         File branchHeadPoint = join(HEAD_DIR, branchName);
-        restrictedDelete(branchHeadPoint);
+        branchHeadPoint.delete();
     }
 
     /**
@@ -772,7 +772,8 @@ public class Repository {
         }
 
         /* 将目前给定的HEAD指针指向这个commit */
-        writeContents(HEAD_POINT, commitId);
+//        writeContents(HEAD_POINT, commitId);
+        saveHEAD(getHeadBranchName(),commitId);
     }
 
 
@@ -804,8 +805,9 @@ public class Repository {
             exit(0);
         }
         Commit headCommit = getHeadCommit();
+        Commit otherHeadCommit = getBranchHeadCommit(branchName,"A branch with that name does not exist."); // 如果不存在这个branch，则报错
 
-        if(headCommit.getBranchName().equals(branchName)){
+        if(getHeadBranchName().equals(branchName)){
             System.out.println("Cannot merge a branch with itself.");
             exit(0);
         }
@@ -814,25 +816,19 @@ public class Repository {
             System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
             exit(0);
         }
-
-        Commit otherHeadCommit = getBranchHeadCommit(branchName,"A branch with that name does not exist."); // 如果不存在这个branch，则报错
-        Commit commit = headCommit;
-        Commit splitCommit = null;
         /* 获取当前splitCommit对象 */
-        while(!commit.getDirectParent().isEmpty()){
-            if(commit.getBranchName().equals("common")){
-                splitCommit = commit;
-                break;
-            }
-        }
+        Commit splitCommit = getSplitCommit(headCommit, otherHeadCommit);
+//        System.out.println(splitCommit);
+//        message("splitCommit msg:"+splitCommit.getMessage());
 
         HashMap<String, String> splitCommitBolbMap = splitCommit.getBlobMap();
+        Set<String> splitKeySet = splitCommitBolbMap.keySet();
         HashMap<String, String> headCommitBolbMap = headCommit.getBlobMap();
         HashMap<String, String> otherHeadCommitBolbMap = otherHeadCommit.getBlobMap();
+        Set<String> otherKeySet = otherHeadCommitBolbMap.keySet();
 
         /* 从split中的文件开始 */
-        for (var splitTrackName :splitCommitBolbMap.keySet()){
-
+        for (var splitTrackName :splitKeySet){
                 // 如果在HEAD中未被修改(包括未被删除）
                 if (headCommitBolbMap.containsKey(splitTrackName) && headCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))){
 
@@ -853,21 +849,20 @@ public class Repository {
 
                 }else {
                     // 在HEAD中被修改（包括被删除）
-
                     if (otherHeadCommitBolbMap.containsKey(splitTrackName) && otherHeadCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))){
                         /* 情况2 HEAD中被修改，other中未被修改，则不修改任何事情 */
                         /* 情况7 HEAD中被删除，other中未被修改，则不修改任何事情 */
                         continue;
                     }else {
-                        /* 情况3 HEAD中被修改，other中被修改(包括被删除)*/
-                        if(otherHeadCommitBolbMap.get(splitTrackName).equals(headCommitBolbMap.get(splitTrackName))){
-                            /* 情况3a 一致的修改 */
+                        if (!otherHeadCommitBolbMap.containsKey(splitTrackName) || !headCommitBolbMap.containsKey(splitTrackName)){
+                            /* 情况3a 一致的删除 */
                             continue;
                         }else {
-                            if(!otherHeadCommitBolbMap.containsKey(splitTrackName) && !headCommitBolbMap.containsKey(splitTrackName)){
-                                /* 情况3a 一致的删除 */
+                            if(otherHeadCommitBolbMap.get(splitTrackName).equals(headCommitBolbMap.get(splitTrackName))) {
+                                /* 情况3a 一致的修改 */
                                 continue;
                             }else {
+                                /* 情况3b 不一致的修改，不包括删除操作 */
                                 /* TODO：情况3b 不一致的修改，需要进行conflict冲突操作 */
                                 /* 初始化操作 */
                                 String otherBlobFile = "";
@@ -892,40 +887,90 @@ public class Repository {
                                 /* 修改workFile中的内容*/
                                 StringBuilder resContent = new StringBuilder();
                                 resContent.append("<<<<<<< HEAD\n");
-                                resContent.append(headBlobContent + "\n");
+                                resContent.append(headBlobContent);
                                 resContent.append("=======" + "\n");
-                                resContent.append(otherBlobContent + "\n");
+                                resContent.append(otherBlobContent);
                                 resContent.append(">>>>>>>" + "\n");
 
                                 String resContentString = resContent.toString();
                                 writeContents(join(CWD,splitTrackName),resContentString);
                                 addStage(splitTrackName);
                             }
-
                         }
+
+//                        /* 情况3 HEAD中被修改，other中被修改(包括被删除)*/
+//                        if(otherHeadCommitBolbMap.get(splitTrackName).equals(headCommitBolbMap.get(splitTrackName))){
+//                            /* 情况3a 一致的修改 */
+//                            continue;
+//                        }else {
+//                            if(!otherHeadCommitBolbMap.containsKey(splitTrackName) && !headCommitBolbMap.containsKey(splitTrackName)){
+//                                /* 情况3a 一致的删除 */
+//                                continue;
+//                            }else {
+//                                /* TODO：情况3b 不一致的修改，需要进行conflict冲突操作 */
+//                                /* 初始化操作 */
+//                                String otherBlobFile = "";
+//                                String otherBlobContent = "";
+//
+//                                String headBlobFile = "";
+//                                String headBlobContent ="";
+//
+//                                /* 打印冲突 */
+//                                message("Encountered a merge conflict.");
+//                                /* 获取*/
+//                                if(otherHeadCommitBolbMap.containsKey(splitTrackName)){
+//                                    otherBlobFile = otherHeadCommitBolbMap.get(splitTrackName);
+//                                    otherBlobContent = getBlobContentFromName(otherBlobFile);
+//                                }
+//
+//                                if(headCommitBolbMap.containsKey(splitTrackName)){
+//                                    headBlobFile = headCommitBolbMap.get(splitTrackName);
+//                                    headBlobContent = getBlobContentFromName(headBlobFile);
+//                                }
+//
+//                                /* 修改workFile中的内容*/
+//                                StringBuilder resContent = new StringBuilder();
+//                                resContent.append("<<<<<<< HEAD\n");
+//                                resContent.append(headBlobContent);
+//                                resContent.append("=======" + "\n");
+//                                resContent.append(otherBlobContent);
+//                                resContent.append(">>>>>>>" + "\n");
+//
+//                                String resContentString = resContent.toString();
+//                                writeContents(join(CWD,splitTrackName),resContentString);
+//                                addStage(splitTrackName);
+//                            }
+//
+//                        }
                     }
                 }
         }
+
+        /* 为解决被删除操作 */
+
         /* 从HEAD中的文件开始 */
         for (var headTrackName : headCommitBolbMap.keySet()){
             if (!otherHeadCommitBolbMap.containsKey(headTrackName) && !splitCommitBolbMap.containsKey(headTrackName)){
                 /* 情况4：如果在other和split中都没有这个文件 */
                 continue;
+            }else if(otherHeadCommitBolbMap.containsKey(headTrackName) && !splitCommitBolbMap.containsKey(headTrackName)){
+                /* 情况5 other中存在文件*/
             }
         }
         /* 从other中的文件开始 */
-        for (var otherTrackName : otherHeadCommitBolbMap.keySet()){
+        for (var otherTrackName : otherKeySet){
             if (!headCommitBolbMap.containsKey(otherTrackName) && !splitCommitBolbMap.containsKey(otherTrackName)){
                 /* 情况5：如果在head和split中都没有这个文件 */
                 String[] checkOutArgs = {"checkout",otherHeadCommit.getHashName(),"--",otherTrackName};
+
                 checkOut(checkOutArgs);
                 addStage(otherTrackName);
             }
         }
 
         /* 进行一次自动的commit */
-        String commitMsg = String.format("Merged %s into %s.",branchName , headCommit.getBranchName());
-        commitFile(commitMsg,branchName);
+        String commitMsg = String.format("Merged %s into %s.",branchName , getHeadBranchName());
+        commitFileForMerge(commitMsg,branchName);
 
 
     }

@@ -62,7 +62,21 @@ public class Refs {
      * Save the point to HEAD into .gitlet/refs/HEAD folder
      * @param branchHeadCommitHash 想要指向的commit的hashName，也就是写入HEAD的内容
      */
-    public static void saveHEAD(String branchHeadCommitHash) {
-        writeContents(HEAD_POINT, branchHeadCommitHash);
+    public static void saveHEAD(String branchName, String branchHeadCommitHash) {
+        writeContents(HEAD_POINT, branchName+":"+branchHeadCommitHash);
     }
+
+    /**
+     * 从HEAD文件中直接获取当前branch的名字
+     * @return
+     */
+    public static String getHeadBranchName() {
+        String headContent = readContentsAsString(HEAD_POINT);
+        String[] splitContent = headContent.split(":");
+        String branchName = splitContent[0];
+        return branchName;
+    }
+
+
+
 }
