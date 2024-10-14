@@ -42,14 +42,17 @@ public class Blob implements Serializable {
 
     /**
      * 根据blobName获取到Blob的内容，其中blobName是一个hash值
-     *
+     * 若是没有这个文件，返回null
      * @return Blob的内容
      */
     public static String getBlobContentFromName(String blobName) {
-
-        File blobFile = join(BLOBS_FOLDER, blobName);
         /* 获取commit文件 */
-        String blobContent = readContentsAsString(blobFile);
+        String blobContent = null ;
+        File blobFile = join(BLOBS_FOLDER, blobName);
+        if(blobFile.isFile() && blobFile.exists()){
+            blobContent = readContentsAsString(blobFile);
+        }
+
 
         return blobContent;
 

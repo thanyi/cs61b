@@ -32,7 +32,8 @@ public class Commit implements Serializable {
     /* The message of this Commit. */
     private String message;
     /* The parent of commit, null if it's the first commit */
-    private String parent;
+    private String directParent;
+    private String otherParent;
     /* the timestamp of commit*/
     private Date timestamp;
     /* the contents of commit files*/
@@ -40,10 +41,10 @@ public class Commit implements Serializable {
     private HashMap<String, String> blobMap = new HashMap<>();
     private String branchName = "master";
 
-    public Commit(String message, Date timestamp, String parent, String blobFileName, String blobHashName) {
+    public Commit(String message, Date timestamp, String directparent, String blobFileName, String blobHashName) {
         this.message = message;
         this.timestamp = timestamp;
-        this.parent = parent;
+        this.directParent = directparent;
         if (blobFileName == null || blobFileName.isEmpty()) {
             this.blobMap = new HashMap<>();
         } else {
@@ -51,11 +52,11 @@ public class Commit implements Serializable {
         }
     }
 
-    public Commit(Commit parent) {
-        this.message = parent.message;
-        this.timestamp = parent.timestamp;
-        this.parent = parent.parent;
-        this.blobMap = parent.blobMap;
+    public Commit(Commit directparent) {
+        this.message = directparent.message;
+        this.timestamp = directparent.timestamp;
+        this.directParent = directparent.directParent;
+        this.blobMap = directparent.blobMap;
     }
 
 
@@ -88,15 +89,15 @@ public class Commit implements Serializable {
 
 
     public String getHashName() {
-        return sha1(this.message, dateToTimeStamp(this.timestamp), this.parent);
+        return sha1(this.message, dateToTimeStamp(this.timestamp), this.directParent);
     }
 
-    public void setParent(String parent) {
-        this.parent = parent;
+    public void setDirectParent(String directParent) {
+        this.directParent = directParent;
     }
 
-    public String getParent() {
-        return parent;
+    public String getDirectParent() {
+        return directParent;
     }
 
     public Date getTimestamp() {
@@ -127,6 +128,15 @@ public class Commit implements Serializable {
     public void setBranchName(String branchName) {
         this.branchName = branchName;
     }
+
+    public String getOtherParent() {
+        return otherParent;
+    }
+
+    public void setOtherParent(String otherParent) {
+        this.otherParent = otherParent;
+    }
+    /* ======================== 以上为getter和setter ======================*/
 
     /**
      * 用于获取HEAD指针指向的Commit对象
@@ -169,7 +179,7 @@ public class Commit implements Serializable {
     /**
      * 通过hashname来获取Commit对象
      *
-     * @param hashName
+     * @param hashName  commit自己的hashName
      * @return
      */
     public static Commit getCommit(String hashName) {
@@ -196,12 +206,14 @@ public class Commit implements Serializable {
         Commit commit = headCommit;
         /* 查找对应的commit */
         while (!commit.getHashName().equals(commitId)) {
-            commit = getCommit(commit.getParent());
-            if (commit.getParent().isEmpty() && !commit.getHashName().equals(commitId)) {
+            commit = getCommit(commit.getDirectParent());
+            if (commit.getDirectParent().isEmpty() && !commit.getHashName().equals(commitId)) {
                 return null;
             }
         }
 
         return commit;
     }
+
+
 }

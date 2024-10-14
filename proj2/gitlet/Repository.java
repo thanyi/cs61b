@@ -179,7 +179,7 @@ public class Repository {
         saveBranch(branchName, commitHashName);
 
         // 将此时的HEAD指针指向commit中的代表head的文件
-        saveHEAD(join(COMMIT_FOLDER, commitHashName));
+        saveHEAD(commitHashName);
 
     }
 
@@ -204,15 +204,17 @@ public class Repository {
 
         File fileAdded = join(CWD, addFileName);
         /* 如果在工作目录中不存在此文件 */
-        String fileAddedContent = readContentsAsString(fileAdded);
+
         if (!fileAdded.exists()) {
             System.out.println("File does not exist.");
             exit(0);
         }
+        String fileAddedContent = readContentsAsString(fileAdded);
 
         Commit headCommit = getHeadCommit();
         HashMap<String, String> headCommitBlobMap = headCommit.getBlobMap();
-        /* 如果这个文件是已经被track中的 */
+
+        /* 如果这个文件已经被track */
         if( headCommitBlobMap.containsKey(addFileName) ){
             String fileAddedInHash = headCommit.getBlobMap().get(addFileName);
             String commitContent = getBlobContentFromName(fileAddedInHash);
@@ -268,6 +270,65 @@ public class Repository {
             System.out.println("No changes added to the commit.");
             exit(0);
         }
+        if (commitMsg == null || commitMsg.isEmpty()) {
+            System.out.println("Please enter a commit message.");
+            exit(0);
+        }
+
+
+        /* 获取最新的commit*/
+        Commit oldCommit = getHeadCommit();
+
+        /* 创建新的commit，newCommit根据oldCommit进行调整*/
+        Commit newCommit = new Commit(oldCommit);
+        newCommit.setDirectParent(oldCommit.getHashName());  // 指定父节点
+        newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
+        newCommit.setMessage(commitMsg); // 修改新一次的commit的时间戳为目前时间
+        newCommit.setBranchName(oldCommit.getBranchName()); // 在log或者status中需要展示本次commit的分支
+
+
+        /* 对每一个addstage中的fileName进行其路径的读取，保存进commit的blobMap */
+        for (String stageFileName : addStageFiles) {
+            String hashName = readContentsAsString(join(ADD_STAGE_DIR, stageFileName));
+            newCommit.addBlob(stageFileName, hashName);     // 在newCommit中更新blob
+            join(ADD_STAGE_DIR, stageFileName).delete();
+        }
+
+        HashMap<String, String> blobMap = newCommit.getBlobMap();
+
+        /* 对每一个rmstage中的fileName进行其路径的读取，删除commit的blobMap中对应的值 */
+        for (String stageFileName : removeStageFiles) {
+            if (blobMap.containsKey(stageFileName)) {
+//                join(BLOBS_FOLDER, blobMap.get(stageFileName)).delete(); // 不能删除，其他commit还需要这个Blob
+                newCommit.removeBlob(stageFileName);   // 在newCommit中删除removeStage中的blob
+            }
+            join(REMOVE_STAGE_DIR, stageFileName).delete();
+        }
+
+        newCommit.saveCommit();
+
+        /* 更新HEAD指针和master指针 */
+        saveHEAD(newCommit.getHashName());
+        saveBranch("master", newCommit.getHashName());
+
+    }
+
+    /**
+     * 根据commit重载的方法，作用是为了进行merge时候的自动commit
+     * @param commitMsg
+     * @param branchName
+     */
+    public static void commitFile(String commitMsg, String branchName){
+
+
+        /* 获取addstage中的filename和hashname */
+        List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
+        List<String> removeStageFiles = plainFilenamesIn(REMOVE_STAGE_DIR);
+        /* 错误的情况，直接返回 */
+        if (addStageFiles.isEmpty() && removeStageFiles.isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            exit(0);
+        }
 
         if (commitMsg == null) {
             System.out.println("Please enter a commit message.");
@@ -276,14 +337,15 @@ public class Repository {
 
         /* 获取最新的commit*/
         Commit oldCommit = getHeadCommit();
+        Commit branchHeadCommit = getBranchHeadCommit(branchName,null);
 
         /* 创建新的commit，newCommit根据oldCommit进行调整*/
         Commit newCommit = new Commit(oldCommit);
-        newCommit.setParent(oldCommit.getHashName());  // 指定父节点
+        newCommit.setDirectParent(oldCommit.getHashName());  // 指定父节点
         newCommit.setTimestamp(new Date(System.currentTimeMillis())); // 修改新一次的commit的时间戳为目前时间
         newCommit.setMessage(commitMsg); // 修改新一次的commit的时间戳为目前时间
         newCommit.setBranchName(oldCommit.getBranchName()); // 在log或者status中需要展示本次commit的分支
-
+        newCommit.setOtherParent(branchHeadCommit.getHashName());   // 指定另一个父节点
 
         /* 对每一个addstage中的fileName进行其路径的读取，保存进commit的blobMap */
         for (String stageFileName : addStageFiles) {
@@ -306,9 +368,8 @@ public class Repository {
         newCommit.saveCommit();
 
         /* 更新HEAD指针和master指针 */
-        saveHEAD(join(COMMIT_FOLDER, newCommit.getHashName()));
+        saveHEAD(newCommit.getHashName());
         saveBranch("master", newCommit.getHashName());
-
     }
 
     /**
@@ -320,11 +381,11 @@ public class Repository {
      */
     public static void removeStage(String removeFileName) {
         /* 如果文件名是空或者如果工作区没有这个文件 */
-        if (removeFileName == null || !join(CWD, removeFileName).exists()) {
+        if (removeFileName == null || removeFileName.isEmpty()) {
             System.out.println("Please enter a file name.");
             exit(0);
         }
-
+//        !join(CWD, removeFileName).exists()
         /* 如果在暂存目录中不存在此文件,同时在在commit中不存在此文件 */
         Commit headCommit = getHeadCommit();
         HashMap<String, String> blobMap = headCommit.getBlobMap();
@@ -354,8 +415,6 @@ public class Repository {
             restrictedDelete(fileDeleted);
         }
 
-
-
     }
 
     /**
@@ -366,9 +425,9 @@ public class Repository {
         Commit headCommit = getHeadCommit();
         Commit commit = headCommit;
 
-        while (!commit.getParent().equals("")) {
+        while (!commit.getDirectParent().equals("")) {
             printCommitLog(commit);
-            commit = getCommit(commit.getParent());
+            commit = getCommit(commit.getDirectParent());
         }
         /* 打印最开始的一项*/
         printCommitLog(commit);
@@ -397,18 +456,30 @@ public class Repository {
         Commit commit = headCommit;
         boolean found = false;
         /* 如果msg相等就break，或者是到达初始提交就退出 */
-        while (!commit.getParent().isEmpty()) {
 
-            if (commit.getMessage().equals(commitMsg)) {
+//        note: 这个方法有bug，无法找出不在branch中的commit
+//        while (!commit.getDirectParent().isEmpty()) {
+//
+//            if (commit.getMessage().equals(commitMsg)) {
+//                found = true;
+//                System.out.println(commit.getHashName());
+//            }
+//            commit = getCommit(commit.getDirectParent());
+//        }
+//        /* 检查最后一个提交 */
+//        if (commit.getMessage().equals(commitMsg)) {
+//            found = true;
+//            System.out.println(commit.getHashName());
+//        }
+
+        /*  直接从commit文件夹中依次寻找 */
+        List<String> commitFiles = plainFilenamesIn(COMMIT_FOLDER);
+        for (String commitFile: commitFiles){
+            Commit commit1 = getCommit(commitFile);
+            if(commit1.getMessage().equals(commitMsg)){
+                message(commit1.getHashName());
                 found = true;
-                System.out.println("commit " + commit.getHashName());
             }
-            commit = getCommit(commit.getParent());
-        }
-        /* 检查最后一个提交 */
-        if (commit.getMessage().equals(commitMsg)) {
-            found = true;
-            System.out.println("commit " + commit.getHashName());
         }
 
         if (!found) {
@@ -562,11 +633,14 @@ public class Repository {
             /* 将目前给定的分支视作当前分支 */
             branchHeadCommit.setBranchName(branchName);
             saveBranch(branchName,branchHeadCommit.getHashName());
-            saveHEAD(join(HEAD_DIR,branchName));
+            saveHEAD(branchHeadCommit.getHashName());
 
         } else if (args.length == 4) {
             //  git checkout [commit id] -- [file name]
-
+            if(!args[2].equals("--")){
+                message("Incorrect operands.");
+                exit(0);
+            }
             /* 获取到Blob对象 */
             fileName = args[3];
             String commitId = args[1];
@@ -624,9 +698,9 @@ public class Repository {
         saveBranch(branchName, headCommit.getHashName());
         Commit commit = headCommit;
         /* 将此split point之前的所有commit的branch设置为"common" */
-        while (!headCommit.getParent().isEmpty()) {
+        while (!headCommit.getDirectParent().isEmpty()) {
             commit.setBranchName("common");
-            commit = getCommit(commit.getParent());
+            commit = getCommit(commit.getDirectParent());
         }
 
     }
@@ -673,8 +747,6 @@ public class Repository {
         }
         Commit headCommit = getHeadCommit();
         Commit commit = getCommitFromId(commitId);
-        Set<String> fileNameSet = commit.getBlobMap().keySet();
-        Set<String> currTrackSet = headCommit.getBlobMap().keySet();
         HashMap<String, String> commitBlobMap = commit.getBlobMap();
 
         /* 先检测CWD中是否存在未被current branch跟踪的文件 */
@@ -691,7 +763,7 @@ public class Repository {
         }
 
         /* 将fileNameSet中每一个跟踪的文件重写入工作文件夹中 */
-        for(var trackedfileName : fileNameSet){
+        for(var trackedfileName : commit.getBlobMap().keySet()){
             // 每一个trackedfileName是一个commit中跟踪的fileName
             File workFile = join(CWD, trackedfileName);
             String blobHash = commitBlobMap.get(trackedfileName);   // 文件对应的blobName
@@ -747,7 +819,7 @@ public class Repository {
         Commit commit = headCommit;
         Commit splitCommit = null;
         /* 获取当前splitCommit对象 */
-        while(!commit.getParent().isEmpty()){
+        while(!commit.getDirectParent().isEmpty()){
             if(commit.getBranchName().equals("common")){
                 splitCommit = commit;
                 break;
@@ -793,11 +865,41 @@ public class Repository {
                             continue;
                         }else {
                             if(!otherHeadCommitBolbMap.containsKey(splitTrackName) && !headCommitBolbMap.containsKey(splitTrackName)){
-                                /* 情况3a 一致的修改，都进行了删除 */
+                                /* 情况3a 一致的删除 */
                                 continue;
                             }else {
                                 /* TODO：情况3b 不一致的修改，需要进行conflict冲突操作 */
+                                /* 初始化操作 */
+                                String otherBlobFile = "";
+                                String otherBlobContent = "";
 
+                                String headBlobFile = "";
+                                String headBlobContent ="";
+
+                                /* 打印冲突 */
+                                message("Encountered a merge conflict.");
+                                /* 获取*/
+                                if(otherHeadCommitBolbMap.containsKey(splitTrackName)){
+                                    otherBlobFile = otherHeadCommitBolbMap.get(splitTrackName);
+                                    otherBlobContent = getBlobContentFromName(otherBlobFile);
+                                }
+
+                                if(headCommitBolbMap.containsKey(splitTrackName)){
+                                    headBlobFile = headCommitBolbMap.get(splitTrackName);
+                                    headBlobContent = getBlobContentFromName(headBlobFile);
+                                }
+
+                                /* 修改workFile中的内容*/
+                                StringBuilder resContent = new StringBuilder();
+                                resContent.append("<<<<<<< HEAD\n");
+                                resContent.append(headBlobContent + "\n");
+                                resContent.append("=======" + "\n");
+                                resContent.append(otherBlobContent + "\n");
+                                resContent.append(">>>>>>>" + "\n");
+
+                                String resContentString = resContent.toString();
+                                writeContents(join(CWD,splitTrackName),resContentString);
+                                addStage(splitTrackName);
                             }
 
                         }
@@ -820,6 +922,11 @@ public class Repository {
                 addStage(otherTrackName);
             }
         }
+
+        /* 进行一次自动的commit */
+        String commitMsg = String.format("Merged %s into %s.",branchName , headCommit.getBranchName());
+        commitFile(commitMsg,branchName);
+
 
     }
 

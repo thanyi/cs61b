@@ -1,6 +1,7 @@
 package gitlet;
 
 import static gitlet.Repository.*;
+import static gitlet.Utils.message;
 
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
@@ -69,11 +70,16 @@ public class Main {
                 }
                 checkOut(args);
                 break;
-
+            case "branch":
+                if (args.length != 2) {
+                    message("Incorrect operands.");
+                }
+                createBranch(args[1]);
+                break;
             case "rm-branch":
                 //  java gitlet.Main rm-branch [branch name]
                 if (args.length != 2) {
-                    System.out.println("Incorrect operands.");
+                    message("Incorrect operands.");
                 }
                 removeBranch(args[1]);
                 break;

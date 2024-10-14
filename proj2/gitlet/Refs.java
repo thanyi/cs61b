@@ -46,13 +46,23 @@ public class Refs {
 
     }
 
+//    /**
+//     * 在HEAD文件中写入当前branch的hash值,
+//     * Save the point to HEAD into .gitlet/refs/HEAD folder
+//     * @param branch_head 位于.gitlet/objects/commits/中的相关文件，也就是写入HEAD的内容
+//     */
+//    public static void saveHEAD(File branch_head) {
+//        String HEAD_content = branch_head.getName();
+//        writeContents(HEAD_POINT, HEAD_content);
+//    }
+
+
     /**
-     * 在HEAD文件中写入当前branch的hash值
+     * 在HEAD文件中写入当前branch的hash值,
      * Save the point to HEAD into .gitlet/refs/HEAD folder
-     * @param branch_head 关于保存在.gitlet/refs/heads中对应分支文件的File对象
+     * @param branchHeadCommitHash 想要指向的commit的hashName，也就是写入HEAD的内容
      */
-    public static void saveHEAD(File branch_head) {
-        String HEAD_content = branch_head.getName();
-        writeContents(HEAD_POINT, HEAD_content);
+    public static void saveHEAD(String branchHeadCommitHash) {
+        writeContents(HEAD_POINT, branchHeadCommitHash);
     }
 }
