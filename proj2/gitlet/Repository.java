@@ -148,6 +148,48 @@ public class Repository {
         return false;
     }
 
+
+    /**
+     * 用于处理两边文件都被修改的情况
+     * @param headCommit
+     * @param otherHeadCommit
+     */
+    public static void processConflict(Commit headCommit, Commit otherHeadCommit,String splitTrackName){
+        String otherBlobFile = "";
+        String otherBlobContent = "";
+
+        String headBlobFile = "";
+        String headBlobContent ="";
+
+        HashMap<String, String> headCommitBolbMap = headCommit.getBlobMap();
+        HashMap<String, String> otherHeadCommitBolbMap = otherHeadCommit.getBlobMap();
+
+        /* 打印冲突 */
+        message("Encountered a merge conflict.");
+        /* 获取*/
+        if(otherHeadCommitBolbMap.containsKey(splitTrackName)){
+            otherBlobFile = otherHeadCommitBolbMap.get(splitTrackName);
+            otherBlobContent = getBlobContentFromName(otherBlobFile);
+        }
+
+        if(headCommitBolbMap.containsKey(splitTrackName)){
+            headBlobFile = headCommitBolbMap.get(splitTrackName);
+            headBlobContent = getBlobContentFromName(headBlobFile);
+        }
+
+        /* 修改workFile中的内容*/
+        StringBuilder resContent = new StringBuilder();
+        resContent.append("<<<<<<< HEAD\n");
+        resContent.append(headBlobContent);
+        resContent.append("=======" + "\n");
+        resContent.append(otherBlobContent);
+        resContent.append(">>>>>>>" + "\n");
+
+        String resContentString = resContent.toString();
+        writeContents(join(CWD,splitTrackName),resContentString);
+        addStage(splitTrackName);
+    }
+
     /* ---------------------- 功能函数实现 --------------------- */
 
     /**
@@ -492,6 +534,12 @@ public class Repository {
      * Displays what branches currently exist, and marks the current branch with a *. Also displays what files have been staged for addition or removal.
      */
     public static void showStatus() {
+        File gitletFile = join(CWD, ".gitlet");
+        if (!gitletFile.exists()){
+            message("Not in an initialized Gitlet directory.");
+            exit(0);
+        }
+
         /* 获取当前分支名 */
         Commit headCommit = getHeadCommit();
         String branchName = getHeadBranchName();
@@ -772,7 +820,6 @@ public class Repository {
         }
 
         /* 将目前给定的HEAD指针指向这个commit */
-//        writeContents(HEAD_POINT, commitId);
         saveHEAD(getHeadBranchName(),commitId);
     }
 
@@ -818,17 +865,17 @@ public class Repository {
         }
         /* 获取当前splitCommit对象 */
         Commit splitCommit = getSplitCommit(headCommit, otherHeadCommit);
-//        System.out.println(splitCommit);
-//        message("splitCommit msg:"+splitCommit.getMessage());
-
+//        message("splitCommit:" + splitCommit.getMessage());
         HashMap<String, String> splitCommitBolbMap = splitCommit.getBlobMap();
         Set<String> splitKeySet = splitCommitBolbMap.keySet();
         HashMap<String, String> headCommitBolbMap = headCommit.getBlobMap();
+        Set<String> headKeySet = headCommitBolbMap.keySet();
         HashMap<String, String> otherHeadCommitBolbMap = otherHeadCommit.getBlobMap();
         Set<String> otherKeySet = otherHeadCommitBolbMap.keySet();
 
         /* 从split中的文件开始 */
         for (var splitTrackName :splitKeySet){
+                // DONE
                 // 如果在HEAD中未被修改(包括未被删除）
                 if (headCommitBolbMap.containsKey(splitTrackName) && headCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))){
 
@@ -848,100 +895,32 @@ public class Repository {
                     }
 
                 }else {
+                    // todo
                     // 在HEAD中被修改（包括被删除）
                     if (otherHeadCommitBolbMap.containsKey(splitTrackName) && otherHeadCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))){
-                        /* 情况2 HEAD中被修改，other中未被修改，则不修改任何事情 */
-                        /* 情况7 HEAD中被删除，other中未被修改，则不修改任何事情 */
+                        /* 情况2 other中未被修改，HEAD中被修改，则不修改任何事情 */
+                        /* 情况7 other中未被修改，HEAD中被删除，则不修改任何事情 */
+                        //DONE
                         continue;
                     }else {
-                        if (!otherHeadCommitBolbMap.containsKey(splitTrackName) || !headCommitBolbMap.containsKey(splitTrackName)){
+                        /* other中被修改 或者被删除 */
+                        if (!otherHeadCommitBolbMap.containsKey(splitTrackName) && !headCommitBolbMap.containsKey(splitTrackName)){
                             /* 情况3a 一致的删除 */
                             continue;
-                        }else {
+                        }else if(!otherHeadCommitBolbMap.containsKey(splitTrackName) || !headCommitBolbMap.containsKey(splitTrackName)){
+                            /* 只存在一方被删除，跳过，从后面单独对HEAD和other指针进行操作 */
+                            continue;
+                        }
+                        else{
                             if(otherHeadCommitBolbMap.get(splitTrackName).equals(headCommitBolbMap.get(splitTrackName))) {
                                 /* 情况3a 一致的修改 */
                                 continue;
                             }else {
                                 /* 情况3b 不一致的修改，不包括删除操作 */
                                 /* TODO：情况3b 不一致的修改，需要进行conflict冲突操作 */
-                                /* 初始化操作 */
-                                String otherBlobFile = "";
-                                String otherBlobContent = "";
-
-                                String headBlobFile = "";
-                                String headBlobContent ="";
-
-                                /* 打印冲突 */
-                                message("Encountered a merge conflict.");
-                                /* 获取*/
-                                if(otherHeadCommitBolbMap.containsKey(splitTrackName)){
-                                    otherBlobFile = otherHeadCommitBolbMap.get(splitTrackName);
-                                    otherBlobContent = getBlobContentFromName(otherBlobFile);
-                                }
-
-                                if(headCommitBolbMap.containsKey(splitTrackName)){
-                                    headBlobFile = headCommitBolbMap.get(splitTrackName);
-                                    headBlobContent = getBlobContentFromName(headBlobFile);
-                                }
-
-                                /* 修改workFile中的内容*/
-                                StringBuilder resContent = new StringBuilder();
-                                resContent.append("<<<<<<< HEAD\n");
-                                resContent.append(headBlobContent);
-                                resContent.append("=======" + "\n");
-                                resContent.append(otherBlobContent);
-                                resContent.append(">>>>>>>" + "\n");
-
-                                String resContentString = resContent.toString();
-                                writeContents(join(CWD,splitTrackName),resContentString);
-                                addStage(splitTrackName);
+                                processConflict(headCommit,otherHeadCommit,splitTrackName);
                             }
                         }
-
-//                        /* 情况3 HEAD中被修改，other中被修改(包括被删除)*/
-//                        if(otherHeadCommitBolbMap.get(splitTrackName).equals(headCommitBolbMap.get(splitTrackName))){
-//                            /* 情况3a 一致的修改 */
-//                            continue;
-//                        }else {
-//                            if(!otherHeadCommitBolbMap.containsKey(splitTrackName) && !headCommitBolbMap.containsKey(splitTrackName)){
-//                                /* 情况3a 一致的删除 */
-//                                continue;
-//                            }else {
-//                                /* TODO：情况3b 不一致的修改，需要进行conflict冲突操作 */
-//                                /* 初始化操作 */
-//                                String otherBlobFile = "";
-//                                String otherBlobContent = "";
-//
-//                                String headBlobFile = "";
-//                                String headBlobContent ="";
-//
-//                                /* 打印冲突 */
-//                                message("Encountered a merge conflict.");
-//                                /* 获取*/
-//                                if(otherHeadCommitBolbMap.containsKey(splitTrackName)){
-//                                    otherBlobFile = otherHeadCommitBolbMap.get(splitTrackName);
-//                                    otherBlobContent = getBlobContentFromName(otherBlobFile);
-//                                }
-//
-//                                if(headCommitBolbMap.containsKey(splitTrackName)){
-//                                    headBlobFile = headCommitBolbMap.get(splitTrackName);
-//                                    headBlobContent = getBlobContentFromName(headBlobFile);
-//                                }
-//
-//                                /* 修改workFile中的内容*/
-//                                StringBuilder resContent = new StringBuilder();
-//                                resContent.append("<<<<<<< HEAD\n");
-//                                resContent.append(headBlobContent);
-//                                resContent.append("=======" + "\n");
-//                                resContent.append(otherBlobContent);
-//                                resContent.append(">>>>>>>" + "\n");
-//
-//                                String resContentString = resContent.toString();
-//                                writeContents(join(CWD,splitTrackName),resContentString);
-//                                addStage(splitTrackName);
-//                            }
-//
-//                        }
                     }
                 }
         }
@@ -949,12 +928,29 @@ public class Repository {
         /* 为解决被删除操作 */
 
         /* 从HEAD中的文件开始 */
-        for (var headTrackName : headCommitBolbMap.keySet()){
-            if (!otherHeadCommitBolbMap.containsKey(headTrackName) && !splitCommitBolbMap.containsKey(headTrackName)){
-                /* 情况4：如果在other和split中都没有这个文件 */
-                continue;
+        for (var headTrackName : headKeySet){
+            if (!otherHeadCommitBolbMap.containsKey(headTrackName) ){
+
+                if (!splitCommitBolbMap.containsKey(headTrackName)){
+                    /* 情况4：如果在other和split中都没有这个文件 */
+                    continue;
+                }else {
+                    /* split：存在  other：被删除 */
+                    if(!headCommitBolbMap.get(headTrackName).equals(splitCommitBolbMap.get(headTrackName))){
+                        /* HEAD：被修改 */
+                        /* 存在 conflict */
+                        processConflict(headCommit,otherHeadCommit,headTrackName);
+                    }
+                    /* 其他情况是情况6 已处理过 */
+                }
+
             }else if(otherHeadCommitBolbMap.containsKey(headTrackName) && !splitCommitBolbMap.containsKey(headTrackName)){
-                /* 情况5 other中存在文件*/
+                /* 情况3b other中存在文件, split中不存在文件，即这是不一致的修改*/
+                if (!otherHeadCommitBolbMap.get(headTrackName).equals(headCommitBolbMap.get(headTrackName))){
+                    /*如果是不一致的修改，进行conflict处理，如果是一致的就跳过*/
+                    processConflict(headCommit,otherHeadCommit,headTrackName);
+                }
+
             }
         }
         /* 从other中的文件开始 */

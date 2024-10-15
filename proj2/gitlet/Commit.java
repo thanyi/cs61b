@@ -4,9 +4,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Date; // TODO: You'll likely use this in this class
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static gitlet.Refs.*;
 import static gitlet.Repository.*;
@@ -220,27 +218,86 @@ public class Commit implements Serializable {
         return commit;
     }
 
-
+    /**
+     * 获取两个分支的共同节点，仅从directParents搜索
+     * @param commitA
+     * @param commitB
+     * @return
+     */
     public static Commit getSplitCommit(Commit commitA, Commit commitB) {
 
         Commit p1 = commitA, p2 = commitB;
-        while (!p1.getHashName().equals(p2.getHashName()) ) {
-            // p1 走一步，如果走到 A 链表末尾，转到 B 链表
-            if (p1 == null)
-                p1 = commitB;
-            else{
-                p1 = getCommit(p1.getDirectParent());
-            }
-            // p2 走一步，如果走到 B 链表末尾，转到 A 链表
-            if (p2 == null)
-                p2 = commitA;
-            else{
-                p2 = getCommit(p2.getDirectParent());
+        /* 用于遍历提交链 */
+        Deque<Commit> dequecommitA = new ArrayDeque<>();
+        Deque<Commit> dequecommitB = new ArrayDeque<>();
+        /* 用于保存访问过的节点 */
+        HashSet<String> visitedInCommitA = new HashSet<>();
+        HashSet<String> visitedInCommitB = new HashSet<>();
+
+        dequecommitA.add(p1);
+        dequecommitB.add(p2);
+
+        while(!dequecommitA.isEmpty() || !dequecommitB.isEmpty()) {
+            if (!dequecommitA.isEmpty()){
+                /* commitA 的队列中存在可遍历对象 */
+                Commit currA = dequecommitA.poll();
+                if (visitedInCommitB.contains(currA.getHashName())) {
+                    return currA;
+                }
+                visitedInCommitA.add(currA.getHashName());
+                addParentsToDeque(currA, dequecommitA);
             }
 
+            if (!dequecommitB.isEmpty()){
+                Commit currB = dequecommitB.poll();
+                if (visitedInCommitA.contains(currB.getHashName())) {
+                    return currB;
+                }
+                visitedInCommitB.add(currB.getHashName());
+                addParentsToDeque(currB, dequecommitB);
+            }
         }
-        return p1;
 
+
+
+
+
+
+//        while (!p1.getHashName().equals(p2.getHashName()) ) {
+//            // p1 走一步，如果走到 A 链表末尾，转到 B 链表
+//            if (p1 == null)
+//                p1 = commitB;
+//            else{
+//                p1 = getCommit(p1.getDirectParent());
+//            }
+//            // p2 走一步，如果走到 B 链表末尾，转到 A 链表
+//            if (p2 == null)
+//                p2 = commitA;
+//            else{
+//                p2 = getCommit(p2.getDirectParent());
+//            }
+//
+//        }
+
+
+        // 如果没有找到，就是null
+        return null;
+
+    }
+
+    /**
+     * 将此节点的父节点（或者是两个父节点）放入队列中
+     * @param commit
+     * @param dequeCommit
+     */
+    private static void addParentsToDeque(Commit commit,Queue<Commit> dequeCommit){
+        if (!commit.getDirectParent().isEmpty()) {
+            dequeCommit.add(getCommitFromId(commit.getDirectParent()));
+        }
+
+        if(commit.getOtherParent() != null) {
+            dequeCommit.add(getCommitFromId(commit.getOtherParent()));
+        }
     }
 
 }
