@@ -107,7 +107,7 @@ public class Main {
                 }
                 mergeBranch(args[1]);
                 break;
-            default : //可选
+            default :
                 message("No command with that name exists.");
                 exit(0);
             // TODO: FILL THE REST IN

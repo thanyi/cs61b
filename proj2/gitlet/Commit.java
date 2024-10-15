@@ -158,7 +158,10 @@ public class Commit implements Serializable {
      *
      * @return
      */
-    public static Commit getBranchHeadCommit(String branchName,String error_msg) {
+    public static Commit getBranchHeadCommit(String branchName, String error_msg) {
+
+
+
         File brancheFile = join(HEAD_DIR, branchName);
         if (!brancheFile.exists()) {
             System.out.println(error_msg);
@@ -167,6 +170,8 @@ public class Commit implements Serializable {
 
         /* 获取HEAD指针,这个指针指向目前最新的commit */
         String headHashName = readContentsAsString(brancheFile);
+
+
         File commitFile = join(COMMIT_FOLDER, headHashName);
         /* 获取commit文件 */
         Commit commit = readObject(commitFile, Commit.class);
@@ -178,7 +183,7 @@ public class Commit implements Serializable {
     /**
      * 通过hashname来获取Commit对象
      *
-     * @param hashName  commit自己的hashName
+     * @param hashName commit自己的hashName
      * @return
      */
     public static Commit getCommit(String hashName) {
@@ -202,16 +207,24 @@ public class Commit implements Serializable {
      * @return commit或者null
      */
     public static Commit getCommitFromId(String commitId) {
-        Commit headCommit = getHeadCommit();
         Commit commit = null;
         /* 查找对应的commit */
 
         /*  直接从commit文件夹中依次寻找 */
-        List<String> commitFiles = plainFilenamesIn(COMMIT_FOLDER);
-        if (!commitFiles.contains(commitId)) {
+        String resCommitId = null;
+        List<String> commitFileNames = plainFilenamesIn(COMMIT_FOLDER);
+        /* 用于应对前缀的情况 */
+        for (String commitFileName : commitFileNames) {
+            if (commitFileName.startsWith(commitId)) {
+                resCommitId = commitFileName;
+                break;
+            }
+        }
+
+        if (resCommitId == null) {
             return null;
-        }else {
-            File commitFile = join(COMMIT_FOLDER, commitId);
+        } else {
+            File commitFile = join(COMMIT_FOLDER, resCommitId);
             commit = readObject(commitFile, Commit.class);
         }
 
@@ -220,6 +233,7 @@ public class Commit implements Serializable {
 
     /**
      * 获取两个分支的共同节点，仅从directParents搜索
+     *
      * @param commitA
      * @param commitB
      * @return
@@ -237,8 +251,8 @@ public class Commit implements Serializable {
         dequecommitA.add(p1);
         dequecommitB.add(p2);
 
-        while(!dequecommitA.isEmpty() || !dequecommitB.isEmpty()) {
-            if (!dequecommitA.isEmpty()){
+        while (!dequecommitA.isEmpty() || !dequecommitB.isEmpty()) {
+            if (!dequecommitA.isEmpty()) {
                 /* commitA 的队列中存在可遍历对象 */
                 Commit currA = dequecommitA.poll();
                 if (visitedInCommitB.contains(currA.getHashName())) {
@@ -248,7 +262,7 @@ public class Commit implements Serializable {
                 addParentsToDeque(currA, dequecommitA);
             }
 
-            if (!dequecommitB.isEmpty()){
+            if (!dequecommitB.isEmpty()) {
                 Commit currB = dequecommitB.poll();
                 if (visitedInCommitA.contains(currB.getHashName())) {
                     return currB;
@@ -259,27 +273,6 @@ public class Commit implements Serializable {
         }
 
 
-
-
-
-
-//        while (!p1.getHashName().equals(p2.getHashName()) ) {
-//            // p1 走一步，如果走到 A 链表末尾，转到 B 链表
-//            if (p1 == null)
-//                p1 = commitB;
-//            else{
-//                p1 = getCommit(p1.getDirectParent());
-//            }
-//            // p2 走一步，如果走到 B 链表末尾，转到 A 链表
-//            if (p2 == null)
-//                p2 = commitA;
-//            else{
-//                p2 = getCommit(p2.getDirectParent());
-//            }
-//
-//        }
-
-
         // 如果没有找到，就是null
         return null;
 
@@ -287,15 +280,16 @@ public class Commit implements Serializable {
 
     /**
      * 将此节点的父节点（或者是两个父节点）放入队列中
+     *
      * @param commit
      * @param dequeCommit
      */
-    private static void addParentsToDeque(Commit commit,Queue<Commit> dequeCommit){
+    private static void addParentsToDeque(Commit commit, Queue<Commit> dequeCommit) {
         if (!commit.getDirectParent().isEmpty()) {
             dequeCommit.add(getCommitFromId(commit.getDirectParent()));
         }
 
-        if(commit.getOtherParent() != null) {
+        if (commit.getOtherParent() != null) {
             dequeCommit.add(getCommitFromId(commit.getOtherParent()));
         }
     }
