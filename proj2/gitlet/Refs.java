@@ -40,8 +40,8 @@ public class Refs {
      */
     public static void saveBranch(String branchName, String hashName) {
         // save the file of the head of a given branch
-        File branch_head = join(HEAD_DIR, branchName);
-        writeContents(branch_head, hashName);
+        File branchHead = join(HEAD_DIR, branchName);
+        writeContents(branchHead, hashName);
 
     }
 
