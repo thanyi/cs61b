@@ -890,8 +890,10 @@ public class Repository {
             if (!headCommitBolbMap.containsKey(otherTrackName)
                     && !splitCommitBolbMap.containsKey(otherTrackName)) {
                 /* 情况5：如果在head和split中都没有这个文件 */
-                String[] checkOutArgs = {"checkout", otherHeadCommit.getHashName(),
-                        "--", otherTrackName};
+                String[] checkOutArgs = {"checkout",
+                                        otherHeadCommit.getHashName(),
+                                        "--",
+                                        otherTrackName};
                 checkOut(checkOutArgs);
                 addStage(otherTrackName);
             }
@@ -926,10 +928,10 @@ public class Repository {
                     if (!otherHeadCommitBolbMap.get(splitTrackName)
                             .equals(splitCommitBolbMap.get(splitTrackName))) {
                         // 使用checkout将other的文件覆盖进工作区，同时将其add进暂存区
-                        String[] checkOutArgs = {  "checkout",
-                                                   otherHeadCommit.getHashName(),
-                                                   "--",
-                                                   splitTrackName};
+                        String[] checkOutArgs = {"checkout",
+                                                otherHeadCommit.getHashName(),
+                                                "--",
+                                                splitTrackName};
                         checkOut(checkOutArgs);
                         addStage(splitTrackName);
                     }
