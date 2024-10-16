@@ -9,7 +9,7 @@ import static gitlet.Utils.*;
 
 public class Blob implements Serializable {
     private String content;
-    public File filePath;
+    private File filePath;
     private String hashName;
 
     public Blob(String content, String hashName) {
@@ -18,8 +18,15 @@ public class Blob implements Serializable {
         this.filePath = join(BLOBS_FOLDER, hashName);
     }
 
+
+    public File getFilePath() {
+        return filePath;
+    }
+
+
+
     /**
-     * To save commit into files in BLOB_FOLDER, persists the status of object.
+     * 将blob对象保存进 BLOB_FOLDER文件，内容就是blob文件的content
      */
     public void saveBlob() {
         if (!filePath.exists()) {
@@ -29,15 +36,6 @@ public class Blob implements Serializable {
 
     }
 
-
-    public boolean compareContents(String content) {
-        if (this.content.equals(content)) return true;
-        else return false;
-    }
-
-    public String getContent() {
-        return content;
-    }
 
 
     /**

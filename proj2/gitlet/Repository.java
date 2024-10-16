@@ -11,18 +11,15 @@ import static gitlet.Utils.*;
 import static gitlet.Blob.*;
 import static java.lang.System.exit;
 
-// TODO: any imports you need here
 
 /**
  * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  * @author ethanyi
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
      * <p>
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -44,7 +41,6 @@ public class Repository {
      *      |-- removestage (folder)
      */
 
-    /* TODO: fill in the rest of this class. */
 
     /**
      * initialize the folder instructure
@@ -147,6 +143,8 @@ public class Repository {
     }
 
 
+
+
     /**
      * 用于处理两边文件都被修改的情况
      *
@@ -192,14 +190,7 @@ public class Repository {
     /* ---------------------- 功能函数实现 --------------------- */
 
     /**
-     * Creates a new Gitlet version-control system in the current directory. This system will automatically start with one
-     * commit: a commit that contains no files and has the commit message initial commit (just like that, with no
-     * punctuation). It will have a single branch: master, which initially points to this initial commit, and master will
-     * be the current branch. The timestamp for this initial commit will be 00:00:00 UTC, Thursday, 1 January 1970 in
-     * whatever format you choose for dates (this is called The (Unix) Epoch, represented internally by the time 0.)
-     * Since the initial commit in all repositories created by Gitlet will have exactly the same content, it follows that
-     * all repositories will automatically share this commit (they will all have the same UID) and all commits in all
-     * repositories will trace back to it.
+     * java gitlet.Main init
      */
     public static void initPersistence() {
         // if .gitlet dir existed
@@ -225,13 +216,7 @@ public class Repository {
     }
 
     /**
-     * Adds a copy of the file as it currently exists to the staging area (see the description of the commit command).
-     * For this reason, adding a file is also called staging the file for addition.
-     * - Staging an already-staged file overwrites the previous entry in the staging area with the new contents.
-     * - The staging area should be somewhere in .gitlet.
-     * If the current working version of the file is identical to the version in the current commit, do not stage it to be added,
-     * and remove it from the staging area if it is already there (as can happen when a file is changed, added, and then changed back to it’s original version).
-     * The file will no longer be staged for removal (see gitlet rm), if it was at the time of the command.
+     * java gitlet.Main add [file name]
      *
      * @param addFileName
      * @apiNote 这个函数用于实现git add
@@ -288,19 +273,11 @@ public class Repository {
         /* 不管原先是否存在，都会执行写逻辑*/
         /* addStage中写入指针,文件名是addFileName, 内容是暂存区保存的路径 */
         File blobPoint = join(ADD_STAGE_DIR, addFileName);
-        writeContents(blobPoint, blobAdd.filePath.getName());
+        writeContents(blobPoint, blobAdd.getFilePath().getName());
     }
 
     /**
-     * Saves a snapshot of tracked files in the current commit and staging area so they can be restored at a later time,
-     * creating a new commit. The commit is said to be tracking the saved files.
-     * <p>
-     * By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files;
-     * it will keep versions of files exactly as they are, and not update them.
-     * A commit will only update the contents of files it is tracking that have been staged for addition at the time of commit,
-     * in which case the commit will now include the version of the file that was staged instead of the version it got from its parent.
-     * A commit will save and start tracking any files that were staged for addition but weren’t tracked by its parent.
-     * Finally, files tracked in the current commit may be untracked in the new commit as a result being staged for removal by the rm command (below).
+     * java gitlet.Main commit [message]
      */
     public static void commitFile(String commitMsg) {
         /* 获取addstage中的filename和hashname */
@@ -340,7 +317,6 @@ public class Repository {
         /* 对每一个rmstage中的fileName进行其路径的读取，删除commit的blobMap中对应的值 */
         for (String stageFileName : removeStageFiles) {
             if (blobMap.containsKey(stageFileName)) {
-//                join(BLOBS_FOLDER, blobMap.get(stageFileName)).delete(); // 不能删除，其他commit还需要这个Blob
                 newCommit.removeBlob(stageFileName);   // 在newCommit中删除removeStage中的blob
             }
             join(REMOVE_STAGE_DIR, stageFileName).delete();
@@ -414,9 +390,7 @@ public class Repository {
     }
 
     /**
-     * Unstage the file if it is currently staged for addition.
-     * If the file is tracked in the current commit, stage it for removal and remove the file from
-     * the working directory if the user has not already done so (do not remove it unless it is tracked in the current commit).
+     * java gitlet.Main rm [file name]
      *
      * @param removeFileName 指定删除的文件名
      */
@@ -459,7 +433,7 @@ public class Repository {
     }
 
     /**
-     * Starting at the current head commit, display information about each commit backwards along the commit tree until the initial commit, following the first parent commit links, ignoring any second parents found in merge commits. (In regular Git, this is what you get with git log --first-parent). This set of commit nodes is called the commit’s history. For every node in this history, the information it should display is the commit id, the time the commit was made, and the commit message.
+     * java gitlet.Main log
      */
     public static void printLog() {
 
@@ -476,7 +450,7 @@ public class Repository {
 
 
     /**
-     * Like log, except displays information about all commits ever made. The order of the commits does not matter. Hint: there is a useful method in gitlet.Utils that will help you iterate over files within a directory.
+     * java gitlet.Main global-log
      *
      * @apiNote 这是不关注分支，只是把文件夹中的内容都打印出来了
      */
@@ -490,7 +464,7 @@ public class Repository {
     }
 
     /**
-     * Prints out the ids of all commits that have the given commit message, one per line. If there are multiple such commits, it prints the ids out on separate lines. The commit message is a single operand; to indicate a multiword message, put the operand in quotation marks, as for the commit command below.
+     * java gitlet.Main find [commit message]
      */
     public static void findCommit(String commitMsg) {
         Commit headCommit = getHeadCommit();
@@ -531,7 +505,7 @@ public class Repository {
 
 
     /**
-     * Displays what branches currently exist, and marks the current branch with a *. Also displays what files have been staged for addition or removal.
+     * java gitlet.Main status
      */
     public static void showStatus() {
         File gitletFile = join(CWD, ".gitlet");
@@ -566,11 +540,9 @@ public class Repository {
                 modifiedFilesList.add(fileAdd);
                 continue;
             }
-
             String workFileContent = readContentsAsString(join(CWD, fileAdd));
             String addStageBlobName = readContentsAsString(join(ADD_STAGE_DIR, fileAdd));
             String addStageFileContent = readContentsAsString(join(BLOBS_FOLDER, addStageBlobName));
-
             if (!workFileContent.equals(addStageFileContent)) {
                 modifiedFilesList.add(fileAdd);       // 当工作区和addStage中文件内容不一致，则进入modifiedFilesList
             }
@@ -591,19 +563,15 @@ public class Repository {
                 continue;
             }
             if (!filesInAdd.contains(trackFile)) { // 当addStage中没有此文件
-
                 String workFileContent = readContentsAsString(workFile);
                 String blobFileContent = readContentsAsString(join(BLOBS_FOLDER, blobMap.get(trackFile)));
-
                 if (!workFileContent.equals(blobFileContent)) {
                     modifiedFilesList.add(trackFile);       // 当正在track的文件被修改，但addStage中无此文件，则进入modifiedFilesList
                 }
-
             }
         }
 
         printStatusPerField("Modifications Not Staged For Commit", modifiedFilesList, branchName);
-
         /* 开始进行：Untracked Files */
         List<String> workFiles = plainFilenamesIn(CWD);
         for (String workFile : workFiles) {
@@ -618,25 +586,13 @@ public class Repository {
         }
 
         printStatusPerField("Untracked Files", untrackFilesList, branchName);
-
     }
 
 
     /**
-     * 1.   Takes the version of the file as it exists in the head commit and puts it in the working directory,
-     * overwriting the version of the file that’s already there if there is one.
-     * The new version of the file is not staged.
-     * <p>
-     * 2.   Takes the version of the file as it exists in the commit with the given id,
-     * and puts it in the working directory, overwriting the version of the file
-     * that’s already there if there is one. The new version of the file is not staged.
-     * <p>
-     * <p>
-     * 3.   Takes all files in the commit at the head of the given branch, and puts them in the working directory,
-     * overwriting the versions of the files that are already there if they exist.
-     * Also, at the end of this command, the given branch will now be considered the current branch (HEAD).
-     * Any files that are tracked in the current branch but are not present in the checked-out branch are deleted.
-     * The staging area is cleared, unless the checked-out branch is the current branch (see Failure cases below).
+     * java gitlet.Main checkout -- [file name]
+     * java gitlet.Main checkout [commit id] -- [file name]
+     * java gitlet.Main checkout [branch name]
      *
      * @param args
      */
@@ -644,43 +600,7 @@ public class Repository {
         String fileName;
         if (args.length == 2) {
             //  git checkout branchName
-            /* 如果checkout的分支就是原分支 */
-            String branchName = args[1];
-            Commit headCommit = getHeadCommit();
-
-            if (branchName.equals(getHeadBranchName())) {
-                System.out.println("No need to checkout the current branch.");
-                exit(0);
-            }
-
-            Commit branchHeadCommit = getBranchHeadCommit(branchName, "No such branch exists");  // 获取branchName的head对应的commit
-            HashMap<String, String> branchHeadBlobMap = branchHeadCommit.getBlobMap();
-            Set<String> fileNameSet = branchHeadBlobMap.keySet();
-
-            List<String> workFileNames = plainFilenamesIn(CWD);
-
-            if (untrackFileExists(headCommit)) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-                exit(0);
-            }
-
-            /* 检测完后清空CWD文件夹 */
-            for (String workFile : workFileNames) {
-                restrictedDelete(join(CWD, workFile));
-            }
-
-            /* 将fileNameSet中每一个跟踪的文件重写入工作文件夹中 */
-            for (var trackedfileName : fileNameSet) {
-                // 每一个trackedfileName是一个commit中跟踪的fileName
-                File workFile = join(CWD, trackedfileName);
-                String blobHash = branchHeadBlobMap.get(trackedfileName);   // 文件对应的blobName
-                String blobFromNameContent = getBlobContentFromName(blobHash);
-                writeContents(workFile, blobFromNameContent);
-            }
-
-            /* 将目前给定的分支视作当前分支 */
-            saveHEAD(branchName, branchHeadCommit.getHashName());
-
+            checkoutBranch(args[1]);
         } else if (args.length == 4) {
             //  git checkout [commit id] -- [file name]
             if (!args[2].equals("--")) {
@@ -692,8 +612,8 @@ public class Repository {
             String commitId = args[1];
             Commit commit = getHeadCommit();
 
-            /* todo:是否可以进行对objects文件夹的重构，实现hashMap结构
-                使得时间效率上不是线性, 而不是依靠链表查找 */
+            /* 是否可以进行对objects文件夹的重构，实现hashMap结构
+                使得时间效率上不是线性, 而不是依靠链表查找？ */
             if (getCommitFromId(commitId) == null) {
                 System.out.println("No commit with that id exists.");
                 exit(0);
@@ -714,7 +634,6 @@ public class Repository {
 
         } else if (args.length == 3) {
             //  git checkout -- [file name]
-
             /* 获取到Blob对象中的内容 */
             fileName = args[2];
             Commit headCommit = getHeadCommit();
@@ -732,12 +651,54 @@ public class Repository {
         }
     }
 
+    /**
+     * 仅针对checkout的
+     * java gitlet.Main checkout [branch name]情况
+     * @param branchName
+     */
+    public static void checkoutBranch(String branchName) {
+        Commit headCommit = getHeadCommit();
+
+        if (branchName.equals(getHeadBranchName())) {
+            System.out.println("No need to checkout the current branch.");
+            exit(0);
+        }
+        // 获取branchName的head对应的commit
+        Commit branchHeadCommit = getBranchHeadCommit(branchName, "No such branch exists");
+        HashMap<String, String> branchHeadBlobMap = branchHeadCommit.getBlobMap();
+        Set<String> fileNameSet = branchHeadBlobMap.keySet();
+
+        List<String> workFileNames = plainFilenamesIn(CWD);
+
+        if (untrackFileExists(headCommit)) {
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            exit(0);
+        }
+
+        /* 检测完后清空CWD文件夹 */
+        for (String workFile : workFileNames) {
+            restrictedDelete(join(CWD, workFile));
+        }
+
+        /* 将fileNameSet中每一个跟踪的文件重写入工作文件夹中 */
+        for (var trackedfileName : fileNameSet) {
+            // 每一个trackedfileName是一个commit中跟踪的fileName
+            File workFile = join(CWD, trackedfileName);
+            String blobHash = branchHeadBlobMap.get(trackedfileName);   // 文件对应的blobName
+            String blobFromNameContent = getBlobContentFromName(blobHash);
+            writeContents(workFile, blobFromNameContent);
+        }
+
+        /* 将目前给定的分支视作当前分支 */
+        saveHEAD(branchName, branchHeadCommit.getHashName());
+    }
+
+
+
+
 
     /**
-     * Creates a new branch with the given name, and points it at the current head commit.
-     * A branch is nothing more than a name for a reference (a SHA-1 identifier) to a commit node.
-     * This command does NOT immediately switch to the newly created branch (just as in real Git).
-     * Before you ever call branch, your code should be running with a default branch called “master”.
+     * java gitlet.Main branch [branch name]
      */
     public static void createBranch(String branchName) {
         Commit headCommit = getHeadCommit();
@@ -753,9 +714,7 @@ public class Repository {
 
 
     /**
-     * Deletes the branch with the given name.
-     * This only means to delete the pointer associated with the branch;
-     * it does not mean to delete all commits that were created under the branch, or anything like that.
+     * java gitlet.Main rm-branch [branch name]
      */
     public static void removeBranch(String branchName) {
         /* 检测是否有相关Branch */
@@ -776,12 +735,7 @@ public class Repository {
     }
 
     /**
-     * Checks out all the files tracked by the given commit.
-     * Removes tracked files that are not present in that commit.
-     * Also moves the current branch’s head to that commit node.
-     * See the intro for an example of what happens to the head pointer after using reset.
-     * The [commit id] may be abbreviated as for checkout.
-     * The staging area is cleared. The command is essentially checkout of an arbitrary commit that also changes the current branch head.
+     * java gitlet.Main reset [commit id]
      *
      * @apiNote java gitlet.Main reset [commit id]      将文件内容全部转化为[commit id]中的文件
      */
@@ -812,7 +766,7 @@ public class Repository {
                 }
             }
             if (!isUntrackInBoth) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                message("There is an untracked file in the way; delete it, or add and commit it first.");
                 exit(0);
             }
 
@@ -842,12 +796,13 @@ public class Repository {
     /**
      * Merges files from the given branch into the current branch.
      * If the split point is the same commit as the given branch,
-     * then we do nothing; the merge is complete, and the operation ends with the message: Given branch is an ancestor of the current branch.
+     * then we do nothing; the merge is complete, and the operation ends with the message:
+     * Given branch is an ancestor of the current branch.
      * <p>
      * If the split point is the current branch, then the effect is to check out the given branch,
      * and the operation ends after printing the message: Current branch fast-forwarded.
      * Otherwise, we continue with the steps below.
-     * <p>
+     * @apiNote :
      * 1. other：被修改      HEAD：未被修改 --->  working DIR: other, 并且需要被add
      * 2. other：未被修改    HEAD：被修改   --->  working DIR: HEAD
      * 3. other：被修改      HEAD：被修改   --->  （一致的修改）  working DIR: HEAD, 相当于什么都不做
@@ -858,29 +813,9 @@ public class Repository {
      * 7. other：未被修改     HEAD：被删除   --->  working DIR: 被删除
      */
     public static void mergeBranch(String branchName) {
-
-        List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
-        List<String> rmStageFiles = plainFilenamesIn(REMOVE_STAGE_DIR);
-        /* 如果存在暂存，直接退出 */
-        if (!addStageFiles.isEmpty() || !rmStageFiles.isEmpty()) {
-            System.out.println("You have uncommitted changes.");
-            exit(0);
-        }
+        checkSafetyInMerge(branchName);
         Commit headCommit = getHeadCommit();
         Commit otherHeadCommit = getBranchHeadCommit(branchName, "A branch with that name does not exist."); // 如果不存在这个branch，则报错
-
-        if (getHeadBranchName().equals(branchName)) {
-            System.out.println("Cannot merge a branch with itself.");
-            exit(0);
-        }
-        /* 查看是否存在未被跟踪的文件 */
-        if (untrackFileExists(headCommit)) {
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-            exit(0);
-        }
-
-
-
         /* 获取当前splitCommit对象 */
         Commit splitCommit = getSplitCommit(headCommit, otherHeadCommit);
         if (splitCommit.getHashName().equals(otherHeadCommit.getHashName())) {
@@ -894,13 +829,10 @@ public class Repository {
         Set<String> headKeySet = headCommitBolbMap.keySet();
         HashMap<String, String> otherHeadCommitBolbMap = otherHeadCommit.getBlobMap();
         Set<String> otherKeySet = otherHeadCommitBolbMap.keySet();
-
         /* 从split中的文件开始 */
         for (var splitTrackName : splitKeySet) {
-            // DONE
             // 如果在HEAD中未被修改(包括未被删除）
             if (headCommitBolbMap.containsKey(splitTrackName) && headCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))) {
-
                 // 如果other中存在此文件
                 if (otherHeadCommitBolbMap.containsKey(splitTrackName)) {
                     /* 情况1 HEAD中未被修改，other中被修改*/
@@ -910,19 +842,14 @@ public class Repository {
                         checkOut(checkOutArgs);
                         addStage(splitTrackName);
                     }
-
                 } else {
                     /* 情况6: 当HEAD未修改，other中被删除 */
                     removeStage(splitTrackName);
                 }
-
             } else {
-                // todo
                 // 在HEAD中被修改（包括被删除）
                 if (otherHeadCommitBolbMap.containsKey(splitTrackName) && otherHeadCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))) {
-                    /* 情况2 other中未被修改，HEAD中被修改，则不修改任何事情 */
-                    /* 情况7 other中未被修改，HEAD中被删除，则不修改任何事情 */
-                    //DONE
+                    /* 情况2 other中未被修改，HEAD中被修改，则不修改任何事情 || 情况7 other中未被修改，HEAD中被删除，则不修改任何事情*/
                     continue;
                 } else {
                     /* other中被修改 或者被删除 */
@@ -938,7 +865,6 @@ public class Repository {
                             continue;
                         } else {
                             /* 情况3b 不一致的修改，不包括删除操作 */
-                            /* TODO：情况3b 不一致的修改，需要进行conflict冲突操作 */
                             processConflict(headCommit, otherHeadCommit, splitTrackName);
                         }
                     }
@@ -947,11 +873,8 @@ public class Repository {
         }
 
         /* 为解决被删除操作 */
-
-        /* 从HEAD中的文件开始 */
         for (var headTrackName : headKeySet) {
             if (!otherHeadCommitBolbMap.containsKey(headTrackName)) {
-
                 if (!splitCommitBolbMap.containsKey(headTrackName)) {
                     /* 情况4：如果在other和split中都没有这个文件 */
                     continue;
@@ -964,36 +887,58 @@ public class Repository {
                     }
                     /* 其他情况是情况6 已处理过 */
                 }
-
             } else if (otherHeadCommitBolbMap.containsKey(headTrackName) && !splitCommitBolbMap.containsKey(headTrackName)) {
                 /* 情况3b other中存在文件, split中不存在文件，即这是不一致的修改*/
                 if (!otherHeadCommitBolbMap.get(headTrackName).equals(headCommitBolbMap.get(headTrackName))) {
                     /*如果是不一致的修改，进行conflict处理，如果是一致的就跳过*/
                     processConflict(headCommit, otherHeadCommit, headTrackName);
                 }
-
             }
         }
-        /* 从other中的文件开始 */
         for (var otherTrackName : otherKeySet) {
             if (!headCommitBolbMap.containsKey(otherTrackName) && !splitCommitBolbMap.containsKey(otherTrackName)) {
                 /* 情况5：如果在head和split中都没有这个文件 */
                 String[] checkOutArgs = {"checkout", otherHeadCommit.getHashName(), "--", otherTrackName};
-
                 checkOut(checkOutArgs);
                 addStage(otherTrackName);
             }
         }
-
         if (splitCommit.getHashName().equals(headCommit.getHashName())) {
             message("Current branch fast-forwarded.");
         }
-
         /* 进行一次自动的commit */
         String commitMsg = String.format("Merged %s into %s.", branchName, getHeadBranchName());
         commitFileForMerge(commitMsg, branchName);
-
-
     }
 
+
+    /**
+     * 检测merge指令的错误情况
+     * @param branchName
+     */
+    public static void checkSafetyInMerge(String branchName){
+
+        List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
+        List<String> rmStageFiles = plainFilenamesIn(REMOVE_STAGE_DIR);
+        /* 如果存在暂存，直接退出 */
+        if (!addStageFiles.isEmpty() || !rmStageFiles.isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            exit(0);
+        }
+        Commit headCommit = getHeadCommit();
+        // 如果不存在这个branch，则报错
+        String errMsg = "A branch with that name does not exist.";
+        Commit otherHeadCommit = getBranchHeadCommit(branchName, errMsg);
+
+        if (getHeadBranchName().equals(branchName)) {
+            System.out.println("Cannot merge a branch with itself.");
+            exit(0);
+        }
+        /* 查看是否存在未被跟踪的文件 */
+        if (untrackFileExists(headCommit)) {
+            String msg = "There is an untracked file in the way; delete it, or add and commit it first.";
+            message(msg);
+            exit(0);
+        }
+    }
 }

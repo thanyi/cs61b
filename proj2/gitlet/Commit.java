@@ -35,9 +35,8 @@ public class Commit implements Serializable {
     /* the timestamp of commit*/
     private Date timestamp;
     /* the contents of commit files*/
-//    private String blobNames;
     private HashMap<String, String> blobMap = new HashMap<>();
-//    private String branchName = "master";
+
 
     public Commit(String message, Date timestamp, String directparent, String blobFileName, String blobHashName) {
         this.message = message;
@@ -119,13 +118,6 @@ public class Commit implements Serializable {
         this.message = message;
     }
 
-//    public String getBranchName() {
-//        return branchName;
-//    }
-//
-//    public void setBranchName(String branchName) {
-//        this.branchName = branchName;
-//    }
 
     public String getOtherParent() {
         return otherParent;
@@ -158,12 +150,12 @@ public class Commit implements Serializable {
      *
      * @return
      */
-    public static Commit getBranchHeadCommit(String branchName, String error_msg) {
+    public static Commit getBranchHeadCommit(String branchName, String errorMsg) {
 
 
         File brancheFile = join(HEAD_DIR, branchName);
         if (!brancheFile.exists()) {
-            System.out.println(error_msg);
+            System.out.println(errorMsg);
             exit(0);
         }
 
@@ -189,8 +181,6 @@ public class Commit implements Serializable {
         List<String> commitFiles = plainFilenamesIn(COMMIT_FOLDER);
         /* 如果在commit文件夹中不存在此文件 */
         if (!commitFiles.contains(hashName)) {
-//            System.out.println("No such file or directory in COMMIT_FOLDER：" + hashName.toString());
-//            exit(0);
             return null;
         }
         File commitFile = join(COMMIT_FOLDER, hashName);

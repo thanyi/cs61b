@@ -45,15 +45,6 @@ public class Refs {
 
     }
 
-//    /**
-//     * 在HEAD文件中写入当前branch的hash值,
-//     * Save the point to HEAD into .gitlet/refs/HEAD folder
-//     * @param branch_head 位于.gitlet/objects/commits/中的相关文件，也就是写入HEAD的内容
-//     */
-//    public static void saveHEAD(File branch_head) {
-//        String HEAD_content = branch_head.getName();
-//        writeContents(HEAD_POINT, HEAD_content);
-//    }
 
 
     /**
