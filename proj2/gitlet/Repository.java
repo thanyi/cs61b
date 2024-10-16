@@ -801,17 +801,17 @@ public class Repository {
         if (untrackFileExists(headCommit)) {
             Set<String> currTrackSet = headCommit.getBlobMap().keySet();
             Set<String> resetTrackSet = commit.getBlobMap().keySet();
-            boolean flag = false;
+            boolean isUntrackInBoth = false;
 
+            /* workfile没有在headCommit中也没有在commit中，将其从addstage中剔除，但在CWD中保存 */
             for (String workFile : workFileNames) {
                 if (!currTrackSet.contains(workFile) && !resetTrackSet.contains(workFile)) {
-                    /* workfile没有在headCommit中也没有在commit中，将其从addstage中剔除，但在CWD中保存 */
                     removeStage(workFile);
-                    flag = true;
+                    isUntrackInBoth = true;
                     break;
                 }
             }
-            if (!flag) {
+            if (!isUntrackInBoth) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 exit(0);
             }
@@ -832,6 +832,8 @@ public class Repository {
             writeContents(workFile, blobFromNameContent);
         }
 
+        /* 同时将其branchHEAD指向commit*/
+        saveBranch(getHeadBranchName(), commitId);
         /* 将目前给定的HEAD指针指向这个commit */
         saveHEAD(getHeadBranchName(), commitId);
     }

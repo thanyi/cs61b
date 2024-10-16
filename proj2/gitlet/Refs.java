@@ -31,7 +31,6 @@ public class Refs {
     public static final File REMOVE_STAGE_DIR = join(GITLET_DIR, "removestage");
 
 
-
     /**
      * 创建一个文件：路径是join(HEAD_DIR, branchName)
      * 向其中写入hashName
@@ -60,14 +59,16 @@ public class Refs {
     /**
      * 在HEAD文件中写入当前branch的hash值,
      * Save the point to HEAD into .gitlet/refs/HEAD folder
+     *
      * @param branchHeadCommitHash 想要指向的commit的hashName，也就是写入HEAD的内容
      */
     public static void saveHEAD(String branchName, String branchHeadCommitHash) {
-        writeContents(HEAD_POINT, branchName+":"+branchHeadCommitHash);
+        writeContents(HEAD_POINT, branchName + ":" + branchHeadCommitHash);
     }
 
     /**
      * 从HEAD文件中直接获取当前branch的名字
+     *
      * @return
      */
     public static String getHeadBranchName() {
@@ -76,7 +77,6 @@ public class Refs {
         String branchName = splitContent[0];
         return branchName;
     }
-
 
 
 }

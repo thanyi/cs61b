@@ -161,7 +161,6 @@ public class Commit implements Serializable {
     public static Commit getBranchHeadCommit(String branchName, String error_msg) {
 
 
-
         File brancheFile = join(HEAD_DIR, branchName);
         if (!brancheFile.exists()) {
             System.out.println(error_msg);

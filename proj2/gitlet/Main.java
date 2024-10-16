@@ -101,16 +101,16 @@ public class Main {
                 break;
 
             case "merge":
-                if(args.length != 2){
+                if (args.length != 2) {
                     message("Incorrect operands.");
                     exit(0);
                 }
                 mergeBranch(args[1]);
                 break;
-            default :
+            default:
                 message("No command with that name exists.");
                 exit(0);
-            // TODO: FILL THE REST IN
+                // TODO: FILL THE REST IN
         }
     }
 }
