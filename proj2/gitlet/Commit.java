@@ -1,6 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
 
 import java.io.File;
 import java.io.Serializable;
@@ -13,14 +12,12 @@ import static java.lang.System.exit;
 
 /**
  * Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- * @author TODO
+ * @author ethanyi
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
      * <p>
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
@@ -38,7 +35,8 @@ public class Commit implements Serializable {
     private HashMap<String, String> blobMap = new HashMap<>();
 
 
-    public Commit(String message, Date timestamp, String directparent, String blobFileName, String blobHashName) {
+    public Commit(String message, Date timestamp, String directparent,
+                  String blobFileName, String blobHashName) {
         this.message = message;
         this.timestamp = timestamp;
         this.directParent = directparent;
@@ -58,7 +56,6 @@ public class Commit implements Serializable {
 
 
 
-    /* TODO: fill in the rest of this class. */
 
     /**
      * To save commit into files in COMMIT_FOLDER, persists the status of object.

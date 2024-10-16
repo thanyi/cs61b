@@ -14,7 +14,7 @@ import static java.lang.System.exit;
 
 /**
  * Represents a gitlet repository.
- *  does at a high level.
+ * does at a high level.
  *
  * @author ethanyi
  */
@@ -108,7 +108,8 @@ public class Repository {
      * @param files      文件夹中的所有文件
      * @param branchName 指定的branchName
      */
-    public static void printStatusPerField(String field, Collection<String> files, String branchName) {
+    public static void printStatusPerField(String field, Collection<String> files,
+                                           String branchName) {
         System.out.println("=== " + field + " ===");
         if (field.equals("Branches")) {
             for (var file : files) {
@@ -129,6 +130,29 @@ public class Repository {
     }
 
 
+    /**
+     *
+     * 对Modifications Not Staged For Commit这个领域的输出
+     * @param field             打印的标题区域
+     * @param modifiedFiles     标记为modified的文件
+     * @param deletedFiles      标记为deleted的文件
+     */
+    public static void printStatusWithStatus(String field, Collection<String> modifiedFiles,
+                                             Collection<String> deletedFiles) {
+        System.out.println("=== " + field + " ===");
+
+        for (var file : modifiedFiles) {
+            System.out.println(file + " " + "(modified)");
+        }
+        for (var file : deletedFiles) {
+            System.out.println(file + " " + "(deleted)");
+        }
+
+        System.out.print("\n");
+    }
+
+
+
     public static boolean untrackFileExists(Commit commit) {
         List<String> workFileNames = plainFilenamesIn(CWD);
         Set<String> currTrackSet = commit.getBlobMap().keySet();
@@ -143,15 +167,14 @@ public class Repository {
     }
 
 
-
-
     /**
      * 用于处理两边文件都被修改的情况
      *
      * @param headCommit
      * @param otherHeadCommit
      */
-    public static void processConflict(Commit headCommit, Commit otherHeadCommit, String splitTrackName) {
+    public static void processConflict(Commit headCommit, Commit otherHeadCommit,
+                                       String splitTrackName) {
         String otherBlobFile = "";
         String otherBlobContent = "";
 
@@ -195,14 +218,16 @@ public class Repository {
     public static void initPersistence() {
         // if .gitlet dir existed
         if (GITLET_DIR.exists()) {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            System.out.println("A Gitlet version-control " +
+                    "system already exists in the current directory.");
             exit(0);
         }
         // create the folders in need
         setupPersistence();
         // create timestamp,Commit and save commit into files
         Date timestamp_init = new Date(0);
-        Commit initialCommit = new Commit("initial commit", timestamp_init, "", null, null);
+        Commit initialCommit = new Commit("initial commit", timestamp_init,
+                "", null, null);
         initialCommit.saveCommit();
 
         // save the hashname to heads dir
@@ -245,7 +270,8 @@ public class Repository {
             String fileAddedInHash = headCommit.getBlobMap().get(addFileName);
             String commitContent = getBlobContentFromName(fileAddedInHash);
 
-            /* 如果暂存内容和想要添加内容一致，则不将其纳入暂存区，同时将其从暂存区删除（如果存在）,同时将其从removal区移除 */
+            /* 如果暂存内容和想要添加内容一致，则不将其纳入暂存区，
+            同时将其从暂存区删除（如果存在）,同时将其从removal区移除 */
             if (commitContent.equals(fileAddedContent)) {
                 List<String> filesAdd = plainFilenamesIn(ADD_STAGE_DIR);
                 List<String> filesRm = plainFilenamesIn(REMOVE_STAGE_DIR);
@@ -525,6 +551,7 @@ public class Repository {
         HashMap<String, String> blobMap = headCommit.getBlobMap();
         Set<String> trackFileSet = blobMap.keySet();  // commit中跟踪着的文件名
         LinkedList<String> modifiedFilesList = new LinkedList<>();
+        LinkedList<String> deletedFilesList = new LinkedList<>();
         LinkedList<String> untrackFilesList = new LinkedList<>();
 
         printStatusPerField("Branches", filesInHead, branchName);
@@ -537,14 +564,15 @@ public class Repository {
         for (String fileAdd : filesInAdd) {
             /* 如果文件在暂存区存在，但是在工作区不存在，则直接加入modifiedFilesList */
             if (!join(CWD, fileAdd).exists()) {
-                modifiedFilesList.add(fileAdd);
+                deletedFilesList.add(fileAdd);
                 continue;
             }
             String workFileContent = readContentsAsString(join(CWD, fileAdd));
             String addStageBlobName = readContentsAsString(join(ADD_STAGE_DIR, fileAdd));
             String addStageFileContent = readContentsAsString(join(BLOBS_FOLDER, addStageBlobName));
             if (!workFileContent.equals(addStageFileContent)) {
-                modifiedFilesList.add(fileAdd);       // 当工作区和addStage中文件内容不一致，则进入modifiedFilesList
+                // 当工作区和addStage中文件内容不一致，则进入modifiedFilesList
+                modifiedFilesList.add(fileAdd);
             }
         }
 
@@ -558,24 +586,28 @@ public class Repository {
 
             if (!workFile.exists()) {      // 当工作区文件直接不存在的情况
                 if (!fileInRmStage.exists()) {
-                    modifiedFilesList.add(trackFile);       // 在rmStage中无此文件，同时工作区也没有这个文件
+                    deletedFilesList.add(trackFile);       // 在rmStage中无此文件，同时工作区也没有这个文件
                 }
                 continue;
             }
             if (!filesInAdd.contains(trackFile)) { // 当addStage中没有此文件
                 String workFileContent = readContentsAsString(workFile);
-                String blobFileContent = readContentsAsString(join(BLOBS_FOLDER, blobMap.get(trackFile)));
+                String blobFileContent = readContentsAsString(join(BLOBS_FOLDER,
+                        blobMap.get(trackFile)));
                 if (!workFileContent.equals(blobFileContent)) {
-                    modifiedFilesList.add(trackFile);       // 当正在track的文件被修改，但addStage中无此文件，则进入modifiedFilesList
+                    // 当正在track的文件被修改，但addStage中无此文件，则进入modifiedFilesList
+                    modifiedFilesList.add(trackFile);
                 }
             }
         }
 
-        printStatusPerField("Modifications Not Staged For Commit", modifiedFilesList, branchName);
+        printStatusWithStatus("Modifications Not Staged For Commit",
+                modifiedFilesList, deletedFilesList);
         /* 开始进行：Untracked Files */
         List<String> workFiles = plainFilenamesIn(CWD);
         for (String workFile : workFiles) {
-            if (!filesInAdd.contains(workFile) && !filesInRm.contains(workFile) && !trackFileSet.contains(workFile)) {
+            if (!filesInAdd.contains(workFile) &&
+                    !filesInRm.contains(workFile) && !trackFileSet.contains(workFile)) {
                 untrackFilesList.add(workFile);
                 continue;
             }
@@ -654,6 +686,7 @@ public class Repository {
     /**
      * 仅针对checkout的
      * java gitlet.Main checkout [branch name]情况
+     *
      * @param branchName
      */
     public static void checkoutBranch(String branchName) {
@@ -671,7 +704,8 @@ public class Repository {
         List<String> workFileNames = plainFilenamesIn(CWD);
 
         if (untrackFileExists(headCommit)) {
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.out.println("There is an untracked file in the way; " +
+                    "delete it, or add and commit it first.");
             exit(0);
         }
 
@@ -692,9 +726,6 @@ public class Repository {
         /* 将目前给定的分支视作当前分支 */
         saveHEAD(branchName, branchHeadCommit.getHashName());
     }
-
-
-
 
 
     /**
@@ -766,7 +797,8 @@ public class Repository {
                 }
             }
             if (!isUntrackInBoth) {
-                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                message("There is an untracked file in the way; " +
+                        "delete it, or add and commit it first.");
                 exit(0);
             }
 
@@ -802,6 +834,7 @@ public class Repository {
      * If the split point is the current branch, then the effect is to check out the given branch,
      * and the operation ends after printing the message: Current branch fast-forwarded.
      * Otherwise, we continue with the steps below.
+     *
      * @apiNote :
      * 1. other：被修改      HEAD：未被修改 --->  working DIR: other, 并且需要被add
      * 2. other：未被修改    HEAD：被修改   --->  working DIR: HEAD
@@ -815,7 +848,8 @@ public class Repository {
     public static void mergeBranch(String branchName) {
         checkSafetyInMerge(branchName);
         Commit headCommit = getHeadCommit();
-        Commit otherHeadCommit = getBranchHeadCommit(branchName, "A branch with that name does not exist."); // 如果不存在这个branch，则报错
+        Commit otherHeadCommit = getBranchHeadCommit(branchName,
+                "A branch with that name does not exist."); // 如果不存在这个branch，则报错
         /* 获取当前splitCommit对象 */
         Commit splitCommit = getSplitCommit(headCommit, otherHeadCommit);
         if (splitCommit.getHashName().equals(otherHeadCommit.getHashName())) {
@@ -829,49 +863,8 @@ public class Repository {
         Set<String> headKeySet = headCommitBolbMap.keySet();
         HashMap<String, String> otherHeadCommitBolbMap = otherHeadCommit.getBlobMap();
         Set<String> otherKeySet = otherHeadCommitBolbMap.keySet();
-        /* 从split中的文件开始 */
-        for (var splitTrackName : splitKeySet) {
-            // 如果在HEAD中未被修改(包括未被删除）
-            if (headCommitBolbMap.containsKey(splitTrackName) && headCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))) {
-                // 如果other中存在此文件
-                if (otherHeadCommitBolbMap.containsKey(splitTrackName)) {
-                    /* 情况1 HEAD中未被修改，other中被修改*/
-                    if (!otherHeadCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))) {
-                        // 使用checkout将other的文件覆盖进工作区，同时将其add进暂存区
-                        String[] checkOutArgs = {"checkout", otherHeadCommit.getHashName(), "--", splitTrackName};
-                        checkOut(checkOutArgs);
-                        addStage(splitTrackName);
-                    }
-                } else {
-                    /* 情况6: 当HEAD未修改，other中被删除 */
-                    removeStage(splitTrackName);
-                }
-            } else {
-                // 在HEAD中被修改（包括被删除）
-                if (otherHeadCommitBolbMap.containsKey(splitTrackName) && otherHeadCommitBolbMap.get(splitTrackName).equals(splitCommitBolbMap.get(splitTrackName))) {
-                    /* 情况2 other中未被修改，HEAD中被修改，则不修改任何事情 || 情况7 other中未被修改，HEAD中被删除，则不修改任何事情*/
-                    continue;
-                } else {
-                    /* other中被修改 或者被删除 */
-                    if (!otherHeadCommitBolbMap.containsKey(splitTrackName) && !headCommitBolbMap.containsKey(splitTrackName)) {
-                        /* 情况3a 一致的删除 */
-                        continue;
-                    } else if (!otherHeadCommitBolbMap.containsKey(splitTrackName) || !headCommitBolbMap.containsKey(splitTrackName)) {
-                        /* 只存在一方被删除，跳过，从后面单独对HEAD和other指针进行操作 */
-                        continue;
-                    } else {
-                        if (otherHeadCommitBolbMap.get(splitTrackName).equals(headCommitBolbMap.get(splitTrackName))) {
-                            /* 情况3a 一致的修改 */
-                            continue;
-                        } else {
-                            /* 情况3b 不一致的修改，不包括删除操作 */
-                            processConflict(headCommit, otherHeadCommit, splitTrackName);
-                        }
-                    }
-                }
-            }
-        }
 
+        processSplitCommit(splitCommit, headCommit, otherHeadCommit);
         /* 为解决被删除操作 */
         for (var headTrackName : headKeySet) {
             if (!otherHeadCommitBolbMap.containsKey(headTrackName)) {
@@ -880,23 +873,27 @@ public class Repository {
                     continue;
                 } else {
                     /* split：存在  other：被删除 */
-                    if (!headCommitBolbMap.get(headTrackName).equals(splitCommitBolbMap.get(headTrackName))) {
+                    if (!headCommitBolbMap.get(headTrackName)
+                            .equals(splitCommitBolbMap.get(headTrackName))) {
                         /* HEAD：被修改 */
                         /* 存在 conflict */
                         processConflict(headCommit, otherHeadCommit, headTrackName);
                     }
                     /* 其他情况是情况6 已处理过 */
                 }
-            } else if (otherHeadCommitBolbMap.containsKey(headTrackName) && !splitCommitBolbMap.containsKey(headTrackName)) {
+            } else if (otherHeadCommitBolbMap.containsKey(headTrackName) &&
+                    !splitCommitBolbMap.containsKey(headTrackName)) {
                 /* 情况3b other中存在文件, split中不存在文件，即这是不一致的修改*/
-                if (!otherHeadCommitBolbMap.get(headTrackName).equals(headCommitBolbMap.get(headTrackName))) {
+                if (!otherHeadCommitBolbMap.get(headTrackName)
+                            .equals(headCommitBolbMap.get(headTrackName))) {
                     /*如果是不一致的修改，进行conflict处理，如果是一致的就跳过*/
                     processConflict(headCommit, otherHeadCommit, headTrackName);
                 }
             }
         }
         for (var otherTrackName : otherKeySet) {
-            if (!headCommitBolbMap.containsKey(otherTrackName) && !splitCommitBolbMap.containsKey(otherTrackName)) {
+            if (!headCommitBolbMap.containsKey(otherTrackName) &&
+                    !splitCommitBolbMap.containsKey(otherTrackName)) {
                 /* 情况5：如果在head和split中都没有这个文件 */
                 String[] checkOutArgs = {"checkout", otherHeadCommit.getHashName(), "--", otherTrackName};
                 checkOut(checkOutArgs);
@@ -912,11 +909,76 @@ public class Repository {
     }
 
 
+    public static void processSplitCommit(Commit splitCommit, Commit headCommit, Commit otherHeadCommit){
+        HashMap<String, String> splitCommitBolbMap = splitCommit.getBlobMap();
+        Set<String> splitKeySet = splitCommitBolbMap.keySet();
+        HashMap<String, String> headCommitBolbMap = headCommit.getBlobMap();
+        Set<String> headKeySet = headCommitBolbMap.keySet();
+        HashMap<String, String> otherHeadCommitBolbMap = otherHeadCommit.getBlobMap();
+        Set<String> otherKeySet = otherHeadCommitBolbMap.keySet();
+
+        /* 从split中的文件开始 */
+        for (var splitTrackName : splitKeySet) {
+            // 如果在HEAD中未被修改(包括未被删除）
+            if (headCommitBolbMap.containsKey(splitTrackName) &&
+                    headCommitBolbMap.get(splitTrackName)
+                            .equals(splitCommitBolbMap.get(splitTrackName))) {
+                // 如果other中存在此文件
+                if (otherHeadCommitBolbMap.containsKey(splitTrackName)) {
+                    /* 情况1 HEAD中未被修改，other中被修改*/
+                    if (!otherHeadCommitBolbMap.get(splitTrackName)
+                            .equals(splitCommitBolbMap.get(splitTrackName))) {
+                        // 使用checkout将other的文件覆盖进工作区，同时将其add进暂存区
+                        String[] checkOutArgs = {"checkout", otherHeadCommit.getHashName(),
+                                "--", splitTrackName};
+                        checkOut(checkOutArgs);
+                        addStage(splitTrackName);
+                    }
+                } else {
+                    /* 情况6: 当HEAD未修改，other中被删除 */
+                    removeStage(splitTrackName);
+                }
+            } else {
+                // 在HEAD中被修改（包括被删除）
+                if (otherHeadCommitBolbMap.containsKey(splitTrackName) &&
+                        otherHeadCommitBolbMap.get(splitTrackName)
+                                .equals(splitCommitBolbMap.get(splitTrackName))) {
+                    /* 情况2 other中未被修改，HEAD中被修改，则不修改任何事情
+                       情况7 other中未被修改，HEAD中被删除，则不修改任何事情 */
+                    continue;
+                } else {
+                    /* other中被修改 或者被删除 */
+                    if (!otherHeadCommitBolbMap.containsKey(splitTrackName) &&
+                            !headCommitBolbMap.containsKey(splitTrackName)) {
+                        /* 情况3a 一致的删除 */
+                        continue;
+                    } else if (!otherHeadCommitBolbMap.containsKey(splitTrackName) ||
+                            !headCommitBolbMap.containsKey(splitTrackName)) {
+                        /* 只存在一方被删除，跳过，从后面单独对HEAD和other指针进行操作 */
+                        continue;
+                    } else {
+                        if (otherHeadCommitBolbMap.get(splitTrackName)
+                                .equals(headCommitBolbMap.get(splitTrackName))) {
+                            /* 情况3a 一致的修改 */
+                            continue;
+                        } else {
+                            /* 情况3b 不一致的修改，不包括删除操作 */
+                            processConflict(headCommit, otherHeadCommit, splitTrackName);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
     /**
      * 检测merge指令的错误情况
+     *
      * @param branchName
      */
-    public static void checkSafetyInMerge(String branchName){
+    public static void checkSafetyInMerge(String branchName) {
 
         List<String> addStageFiles = plainFilenamesIn(ADD_STAGE_DIR);
         List<String> rmStageFiles = plainFilenamesIn(REMOVE_STAGE_DIR);
@@ -936,8 +998,8 @@ public class Repository {
         }
         /* 查看是否存在未被跟踪的文件 */
         if (untrackFileExists(headCommit)) {
-            String msg = "There is an untracked file in the way; delete it, or add and commit it first.";
-            message(msg);
+            message("There is an untracked file in the way; " +
+                    "delete it, or add and commit it first.");
             exit(0);
         }
     }
